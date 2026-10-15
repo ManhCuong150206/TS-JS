@@ -23,7 +23,7 @@ Cả nhóm dùng chung **npm** (không dùng yarn hay pnpm để tránh lệch f
 
 ### Quyền truy cập repo
 
-Repo để chế độ **Private**. Trưởng nhóm phải mời từng người vào trước:
+Repo để chế độ **Private**. 
 
 1. GitHub → repo → **Settings** → **Collaborators** → **Add people**.
 2. Người được mời kiểm tra email và bấm **Accept invitation**.
@@ -61,10 +61,7 @@ File `.env` chứa cấu hình riêng của từng máy nên **không có trên 
 copy .env.example .env
 ```
 
-**Windows (PowerShell), macOS, Linux, Git Bash:**
-```bash
-cp .env.example .env
-```
+
 
 Hoặc làm tay: chuột phải `.env.example` → Copy → Paste → đổi tên bản sao thành đúng `.env` (có dấu chấm đầu, không có đuôi nào khác).
 
@@ -74,7 +71,7 @@ Mở file `.env` và ghi:
 
 ```dotenv
 connection_string=mongodb://127.0.0.1:27017/hoi-quy-3d
-PORT=3000
+
 ```
 
 Ý nghĩa:
@@ -92,15 +89,7 @@ Lưu ý quan trọng:
 - **Không có dấu cách** hai bên dấu `=`, không bọc giá trị trong dấu ngoặc.
 - Sửa `.env` xong phải **tắt và chạy lại server** thì mới có tác dụng.
 
-### Dùng chung MongoDB Atlas (nếu nhóm chọn cách này)
 
-Nếu nhóm dùng một database chung trên cloud, trưởng nhóm sẽ gửi **riêng qua chat nhóm** một chuỗi kết nối dạng:
-
-```dotenv
-connection_string=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/hoi-quy-3d
-```
-
-Dán vào `.env` của mình. **Tuyệt đối không đăng chuỗi này lên GitHub, README hay nhóm công khai.** Nếu mật khẩu có ký tự đặc biệt (`@`, `#`, `/`, `:`), phải mã hóa dạng URL hoặc đổi mật khẩu cho đơn giản.
 
 Nếu dùng MongoDB cài trên máy (`127.0.0.1`), dữ liệu của mỗi người **tách riêng**, không ai nhìn thấy dữ liệu của ai.
 
