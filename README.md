@@ -1,124 +1,325 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Hồi quy 3D
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Web app trực quan hóa quá trình học của mô hình hồi quy trong không gian 3D.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- **Backend:** NestJS + TypeScript
+- **Database:** MongoDB (Mongoose)
+- **Frontend:** (sẽ bổ sung)
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 1. Chuẩn bị trước khi clone
 
-## Project setup
+Mỗi thành viên cần cài sẵn:
 
-```bash
-$ npm install
-```
+| Công cụ | Ghi chú | Kiểm tra bằng lệnh |
+|---|---|---|
+| Git | https://git-scm.com | `git --version` |
+| Node.js bản LTS (20 trở lên) | https://nodejs.org | `node -v` |
+| MongoDB Community Server + MongoDB Compass | https://www.mongodb.com/try/download/community | mở Compass, kết nối `mongodb://127.0.0.1:27017` |
+| VS Code (khuyến nghị) | https://code.visualstudio.com | |
 
-## Compile and run the project
+Cả nhóm dùng chung **npm** (không dùng yarn hay pnpm để tránh lệch file khóa).
 
-```bash
-# development
-$ npm run start
+### Quyền truy cập repo
 
-# watch mode
-$ npm run start:dev
+Repo để chế độ **Private**. Trưởng nhóm phải mời từng người vào trước:
 
-# production mode
-$ npm run start:prod
-```
+1. GitHub → repo → **Settings** → **Collaborators** → **Add people**.
+2. Người được mời kiểm tra email và bấm **Accept invitation**.
 
-## Run tests
+Khi clone, GitHub sẽ đòi đăng nhập. Mật khẩu tài khoản GitHub **không dùng được**, hãy đăng nhập qua cửa sổ trình duyệt do Git mở ra (Git Credential Manager), hoặc dùng **Personal Access Token**:
+GitHub → Settings → Developer settings → Personal access tokens → Generate new token → tick quyền `repo`. Dán token vào ô mật khẩu.
+
+---
+
+## 2. Clone và chạy lần đầu
+
+### Bước 1: Clone repo
+
+Mở Terminal (hoặc Git Bash) tại thư mục muốn lưu dự án:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone https://github.com/ManhCuong150206/TS-JS.git
+cd TS-JS
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Bước 2: Cài thư viện
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Lệnh này đọc `package.json` và tự tải mọi thư viện vào thư mục `node_modules`. Không cần gõ lại từng tên gói.
 
-## Observability
+### Bước 3: Tạo file `.env`
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+File `.env` chứa cấu hình riêng của từng máy nên **không có trên GitHub**. Mỗi người tự tạo từ file mẫu `.env.example`:
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+**Windows (CMD):**
+```bash
+copy .env.example .env
+```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+**Windows (PowerShell), macOS, Linux, Git Bash:**
+```bash
+cp .env.example .env
+```
 
-To add it to this project:
+Hoặc làm tay: chuột phải `.env.example` → Copy → Paste → đổi tên bản sao thành đúng `.env` (có dấu chấm đầu, không có đuôi nào khác).
+
+### Bước 4: Điền nội dung `.env`
+
+Mở file `.env` và ghi:
+
+```dotenv
+connection_string=mongodb://127.0.0.1:27017/hoi-quy-3d
+PORT=3000
+```
+
+Ý nghĩa:
+
+| Biến | Ý nghĩa |
+|---|---|
+| `connection_string` | Địa chỉ MongoDB. Phần cuối `/hoi-quy-3d` là **tên database**, MongoDB sẽ tự tạo khi có dữ liệu đầu tiên |
+| `PORT` | Cổng chạy server |
+
+Lưu ý quan trọng:
+
+- Tên biến trong `.env` phải **giống hệt** tên mà code đọc (`connection_string`), kể cả chữ hoa chữ thường.
+- Tên database **phân biệt chữ hoa/thường**: `hoi-quy-3d` và `Hoi-Quy-3D` là hai database khác nhau.
+- Dùng `127.0.0.1` thay cho `localhost` để tránh lỗi `ECONNREFUSED` trên Node bản mới.
+- **Không có dấu cách** hai bên dấu `=`, không bọc giá trị trong dấu ngoặc.
+- Sửa `.env` xong phải **tắt và chạy lại server** thì mới có tác dụng.
+
+### Dùng chung MongoDB Atlas (nếu nhóm chọn cách này)
+
+Nếu nhóm dùng một database chung trên cloud, trưởng nhóm sẽ gửi **riêng qua chat nhóm** một chuỗi kết nối dạng:
+
+```dotenv
+connection_string=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/hoi-quy-3d
+```
+
+Dán vào `.env` của mình. **Tuyệt đối không đăng chuỗi này lên GitHub, README hay nhóm công khai.** Nếu mật khẩu có ký tự đặc biệt (`@`, `#`, `/`, `:`), phải mã hóa dạng URL hoặc đổi mật khẩu cho đơn giản.
+
+Nếu dùng MongoDB cài trên máy (`127.0.0.1`), dữ liệu của mỗi người **tách riêng**, không ai nhìn thấy dữ liệu của ai.
+
+### Bước 5: Chạy server
+
+Bảo đảm MongoDB trên máy đang chạy (mở Compass, kết nối được là ổn), rồi:
 
 ```bash
-$ npm install @nestjs/observe
+npm run start:dev
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+Chế độ này tự khởi động lại mỗi khi lưu file code. Mở trình duyệt vào:
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+```
+http://localhost:3000
+```
 
-## Resources
+Thấy chữ **Hello World!** là chạy thành công. Tắt server bằng `Ctrl + C`.
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 3. Quy trình làm việc với Git (đọc kỹ)
 
-## Support
+### Nguyên tắc chung
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **Không ai push thẳng lên `main`.** Nhánh `main` luôn phải chạy được.
+- Mỗi việc làm trên **một nhánh riêng**, xong thì tạo **Pull Request (PR)** để người khác xem rồi mới gộp.
+- **Pull trước khi bắt đầu làm** để lấy code mới nhất của cả nhóm.
+- Commit nhỏ, thường xuyên, mỗi commit một việc rõ ràng.
+- **Không bao giờ commit file `.env`**.
 
-## Stay in touch
+### Quy trình hằng ngày (từng bước)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Bước 1: Lấy code mới nhất về `main`**
 
-## License
+```bash
+git checkout main
+git pull origin main
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**Bước 2: Tạo nhánh mới cho việc của mình**
+
+```bash
+git checkout -b feature/ten-viec
+```
+
+Cách đặt tên nhánh:
+
+| Loại việc | Mẫu tên | Ví dụ |
+|---|---|---|
+| Tính năng mới | `feature/...` | `feature/experiments-api` |
+| Sửa lỗi | `fix/...` | `fix/loi-ket-noi-db` |
+| Tài liệu | `docs/...` | `docs/cap-nhat-readme` |
+
+Tên nhánh viết thường, không dấu, nối bằng gạch ngang.
+
+**Bước 3: Viết code**
+
+Làm việc bình thường, chạy `npm run start:dev` để thử.
+
+**Bước 4: Xem mình đã sửa gì**
+
+```bash
+git status
+```
+
+Kiểm tra danh sách file: **không được có `.env`**, `node_modules` hay `dist`. Nếu thấy thì dừng lại, báo trưởng nhóm kiểm tra `.gitignore`.
+
+**Bước 5: Commit**
+
+```bash
+git add .
+git commit -m "feat: them API tao thi nghiem"
+```
+
+Mẫu nội dung commit (viết ngắn, nói rõ làm gì):
+
+| Tiền tố | Dùng khi |
+|---|---|
+| `feat:` | Thêm tính năng |
+| `fix:` | Sửa lỗi |
+| `docs:` | Sửa tài liệu |
+| `refactor:` | Sắp xếp lại code, không đổi chức năng |
+| `test:` | Thêm hoặc sửa test |
+
+**Bước 6: Cập nhật nhánh theo `main` mới nhất rồi push**
+
+Trong lúc m làm, người khác có thể đã gộp code vào `main`. Kéo về trước khi push để phát hiện xung đột sớm:
+
+```bash
+git pull origin main
+git push -u origin feature/ten-viec
+```
+
+Lần đầu push một nhánh mới thì dùng `-u`. Những lần sau trên cùng nhánh chỉ cần `git push`.
+
+**Bước 7: Tạo Pull Request trên GitHub**
+
+1. Vào trang repo, GitHub thường hiện nút vàng **Compare & pull request**, bấm vào. (Nếu không thấy: tab **Pull requests** → **New pull request** → chọn nhánh của mình.)
+2. Đặt tiêu đề rõ ràng, mô tả ngắn đã làm gì và cách thử.
+3. Ở mục **Reviewers**, chọn một bạn trong nhóm.
+4. Bấm **Create pull request**.
+
+**Bước 8: Review và gộp**
+
+- Người review xem code, để lại nhận xét nếu cần. Người viết sửa rồi push tiếp lên cùng nhánh, PR tự cập nhật.
+- Khi đã ổn: bấm **Merge pull request** → **Confirm merge**.
+- Sau khi gộp có thể bấm **Delete branch** trên GitHub cho gọn.
+
+**Bước 9: Dọn dẹp trên máy**
+
+```bash
+git checkout main
+git pull origin main
+git branch -d feature/ten-viec
+```
+
+Rồi quay lại Bước 2 cho việc kế tiếp.
+
+---
+
+## 4. Xử lý xung đột (conflict)
+
+Xung đột xảy ra khi hai người cùng sửa **cùng một chỗ** của một file. Khi `git pull` báo `CONFLICT`, đừng hoảng:
+
+1. Chạy `git status`, các file bị xung đột nằm trong mục **both modified**.
+2. Mở file đó trong VS Code, tìm các đoạn có dạng:
+
+```
+<<<<<<< HEAD
+code của m
+=======
+code của người khác
+>>>>>>> origin/main
+```
+
+3. Quyết định giữ phần nào (hoặc gộp cả hai), rồi **xóa hẳn ba dòng đánh dấu** `<<<<<<<`, `=======`, `>>>>>>>`. VS Code có các nút **Accept Current / Accept Incoming / Accept Both** ngay trên đoạn xung đột.
+4. Lưu file, rồi:
+
+```bash
+git add .
+git commit -m "fix: giai quyet xung dot voi main"
+git push
+```
+
+Nếu không chắc nên giữ code nào, **hỏi người kia** trước khi chọn. Đừng xóa bừa.
+
+Cách giảm xung đột: chia việc để mỗi người sửa file riêng, và pull thường xuyên.
+
+---
+
+## 5. Các lệnh Git hay dùng
+
+| Lệnh | Tác dụng |
+|---|---|
+| `git status` | Xem file nào đã sửa, file nào chuẩn bị commit |
+| `git branch` | Liệt kê nhánh trên máy (dấu `*` là nhánh đang đứng) |
+| `git checkout ten-nhanh` | Chuyển sang nhánh khác |
+| `git log --oneline` | Xem lịch sử commit gọn |
+| `git diff` | Xem chi tiết dòng nào đã sửa (chưa add) |
+| `git restore ten-file` | Bỏ các sửa đổi chưa commit của một file |
+| `git stash` / `git stash pop` | Cất tạm thay đổi để chuyển nhánh, rồi lấy lại |
+| `git remote -v` | Xem repo đang nối tới đâu |
+
+---
+
+## 6. Cấu trúc thư mục
+
+```
+.
+├── src/
+│   ├── main.ts              điểm khởi động server
+│   ├── app.module.ts        module gốc: đọc .env, mở kết nối MongoDB
+│   ├── app.controller.ts
+│   ├── app.service.ts
+│   └── <ten-module>/        mỗi tính năng một thư mục
+│       ├── *.module.ts      khai báo module
+│       ├── *.controller.ts  nhận request HTTP
+│       ├── *.service.ts     xử lý logic, làm việc với DB
+│       └── *.schema.ts      mô tả dữ liệu trong MongoDB
+├── test/                    test e2e
+├── .env                     cấu hình riêng từng máy (KHÔNG commit)
+├── .env.example             file mẫu cấu hình (có commit)
+└── package.json
+```
+
+Quy ước thêm module mới:
+
+```bash
+nest g module ten-module
+nest g service ten-module
+nest g controller ten-module
+```
+
+---
+
+## 7. Lỗi thường gặp
+
+| Thông báo / hiện tượng | Nguyên nhân và cách xử lý |
+|---|---|
+| `Missing script: "start:dev"` | Đang đứng sai thư mục. `cd` vào thư mục chứa `package.json` |
+| `Cannot find module ...` | Chưa chạy `npm install` |
+| `MongooseServerSelectionError` / `ECONNREFUSED` | MongoDB chưa chạy hoặc sai địa chỉ trong `.env`. Mở Compass thử kết nối. Dùng `127.0.0.1` thay `localhost` |
+| `bad auth` / `Authentication failed` | Sai user hoặc mật khẩu trong chuỗi kết nối Atlas |
+| Timeout khi dùng Atlas | Chưa mở IP ở Atlas → Network Access |
+| `Nest can't resolve dependencies ... DatabaseConnection` | Thiếu `MongooseModule.forRootAsync` trong `app.module.ts` |
+| API trả về `[]` dù database có dữ liệu | Sai tên database (hoa/thường) trong `.env`, hoặc schema sai tên collection (cần `@Schema({ collection: 'ten-collection' })`) |
+| `EADDRINUSE: port 3000` | Cổng 3000 đang bị chương trình khác dùng. Tắt nó hoặc đổi `PORT` trong `.env` |
+| Sửa `.env` mà không thấy đổi | Phải tắt (`Ctrl + C`) và chạy lại `npm run start:dev` |
+| `git push` bị `rejected` | Có người đã push trước. Chạy `git pull origin main` rồi push lại |
+| Git hỏi tên và email khi commit | `git config --global user.name "Ten cua ban"` và `git config --global user.email "email-github"` |
+| Lỡ `git add` file `.env` | Chạy `git rm --cached .env` rồi commit. Nếu đã push chuỗi có mật khẩu: **đổi mật khẩu database ngay** |
+
+---
+
+## 8. Quy ước chung của nhóm
+
+- Không push thẳng lên `main`. Mọi thay đổi đi qua Pull Request.
+- Không commit `.env`, `node_modules`, `dist`.
+- Thay đổi cấu trúc dữ liệu (schema) hoặc API phải **báo cả nhóm** trước khi gộp, vì Frontend và Tester phụ thuộc vào đó.
+- Một việc xong khi: code chạy được, có hướng dẫn thử, và đã được một người review.
+- Gặp lỗi thì copy **nguyên văn** thông báo lỗi gửi vào nhóm, kèm lệnh đã chạy. Nhớ **che mật khẩu** nếu có.
