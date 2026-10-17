@@ -1,0 +1,6 @@
+.env
+node_modules/
+dist/
+data/uploads/**
+!data/uploads/.gitkeep
+npm-debug.log*

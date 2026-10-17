@@ -1,0 +1,21 @@
+{
+  "name": "regression-3d-backend-data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MongoDB models and connection setup for the regression 3D project",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "db:check": "node dist/check-database.js",
+    "db:check:dev": "tsx src/check-database.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
