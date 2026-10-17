@@ -3,7 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-
+import { DatasetsModule } from './datasets/datasets.module.js';
+import { ExperimentsModule } from './experiments/experiments.module.js';
+import { TrainingRunsModule } from './training-runs/training-runs.module.js';
+import { SyncModule } from './sync/sync.module.js';
 
 @Module({
   controllers: [AppController],
@@ -13,10 +16,13 @@ import { AppService } from './app.service.js';
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('connection_string'),
+        uri: config.get<string>('MONGODB_URI') || config.get<string>('connection_string'),
       }),
     }),
-
+    DatasetsModule,
+    ExperimentsModule,
+    TrainingRunsModule,
+    SyncModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
