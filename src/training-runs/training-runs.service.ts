@@ -35,14 +35,19 @@ export class TrainingRunsService {
     }
 
     const clientId = dto.clientId || randomUUID();
-    const createdRun = new this.trainingRunModel({
-      ...dto,
-      experimentId: experimentObjectId,
-      clientId,
-      algorithmVersion: dto.algorithmVersion || '1.0.0',
-      ownerId: ownerId || dto.ownerId || 'anonymous_user',
-      syncVersion: 1,
-    });
+    const createdRun = new this.trainingRunModel(
+      Object.assign(
+        {},
+        dto,
+        {
+          experimentId: experimentObjectId,
+          clientId,
+          algorithmVersion: dto.algorithmVersion || '1.0.0',
+          ownerId: ownerId || dto.ownerId || 'anonymous_user',
+          syncVersion: 1,
+        },
+      ),
+    );
 
     return createdRun.save();
   }

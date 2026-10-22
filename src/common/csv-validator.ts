@@ -228,7 +228,7 @@ export class CsvValidator {
         columns[c].inferredType = 'unknown';
       } else {
         const nNum = typeCounts[c].number || 0;
-        const nStr = typeCounts[c].string || 0;
+        // const nStr = typeCounts[c].string || 0; // Removed unused variable
         const nBool = typeCounts[c].boolean || 0;
         const nDate = typeCounts[c].date || 0;
 

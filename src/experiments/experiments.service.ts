@@ -52,7 +52,7 @@ export class ExperimentsService {
         break;
       }
       default:
-        throw new BadRequestException(`Unsupported algorithm type: ${type}`);
+        throw new BadRequestException(`Unsupported algorithm type: ${type as string}`);
     }
   }
 
@@ -90,13 +90,18 @@ export class ExperimentsService {
     }
 
     const clientId = dto.clientId || randomUUID();
-    const created = new this.experimentModel({
-      ...dto,
-      datasetId: datasetObjectId,
-      clientId,
-      ownerId: ownerId || dto.ownerId || 'anonymous_user',
-      syncVersion: 1,
-    });
+    const created = new this.experimentModel(
+      Object.assign(
+        {},
+        dto,
+        {
+          datasetId: datasetObjectId,
+          clientId,
+          ownerId: ownerId || dto.ownerId || 'anonymous_user',
+          syncVersion: 1,
+        },
+      ),
+    );
 
     return created.save();
   }

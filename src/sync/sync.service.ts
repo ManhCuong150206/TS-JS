@@ -73,7 +73,7 @@ export class SyncService {
               entityType: op.entityType,
               entityClientId: op.entityClientId,
               status: 'error',
-              error: `EntityType không hợp lệ: ${op.entityType}`,
+              error: `EntityType không hợp lệ: ${String(op.entityType)}`,
             };
         }
 
@@ -237,7 +237,7 @@ export class SyncService {
       };
     }
 
-    throw new BadRequestException(`Hành động không được hỗ trợ: ${op.action}`);
+    throw new BadRequestException(`Hành động không được hỗ trợ: ${String(op.action)}`);
   }
 
   /**
@@ -342,7 +342,7 @@ export class SyncService {
       };
     }
 
-    throw new BadRequestException(`Hành động không hợp lệ: ${op.action}`);
+    throw new BadRequestException(`Hành động không hợp lệ: ${String(op.action)}`);
   }
 
   /**

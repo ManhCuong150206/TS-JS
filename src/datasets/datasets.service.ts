@@ -27,7 +27,7 @@ export class DatasetsService {
   ) {
     this.storageDir = path.resolve(process.env.DATASET_STORAGE_DIR || './data/uploads');
     this.maxFileSize = parseInt(process.env.MAX_DATASET_FILE_SIZE || '10485760', 10); // 10MB
-    this.ensureStorageDirectory();
+    void this.ensureStorageDirectory();
   }
 
   private async ensureStorageDirectory(): Promise<void> {
@@ -112,13 +112,18 @@ export class DatasetsService {
    */
   async create(dto: CreateDatasetDto, ownerId?: string): Promise<Dataset> {
     const clientId = dto.clientId || randomUUID();
-    const createdDataset = new this.datasetModel({
-      ...dto,
-      clientId,
-      ownerId: ownerId || dto.ownerId || 'anonymous_user',
-      status: 'ready',
-      syncVersion: 1,
-    });
+    const createdDataset = new this.datasetModel(
+      Object.assign(
+        {},
+        dto,
+        {
+          clientId,
+          ownerId: ownerId || dto.ownerId || 'anonymous_user',
+          status: 'ready',
+          syncVersion: 1,
+        },
+      ),
+    );
     return createdDataset.save();
   }
 
