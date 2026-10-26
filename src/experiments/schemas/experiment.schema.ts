@@ -55,17 +55,17 @@ export class Experiment {
   @Prop({ enum: ['draft', 'ready', 'running', 'completed', 'error'], default: 'draft', index: true })
   status: ExperimentStatus;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Dataset', required: true, index: true })
-  datasetId: MongooseSchema.Types.ObjectId;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Dataset', required: false, index: true })
+  datasetId?: MongooseSchema.Types.ObjectId;
 
   @Prop({ type: AlgorithmInfoSchema, required: true })
   algorithm: AlgorithmInfo;
 
-  @Prop({ required: true, trim: true })
-  targetColumn: string;
+  @Prop({ required: false, trim: true, default: 'y' })
+  targetColumn?: string;
 
-  @Prop({ type: [String], required: true })
-  featureColumns: string[];
+  @Prop({ type: [String], default: [] })
+  featureColumns?: string[];
 
   @Prop({ type: PreprocessingConfigSchema, default: () => ({}) })
   preprocessing: PreprocessingConfig;

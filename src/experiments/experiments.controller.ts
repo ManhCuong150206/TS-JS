@@ -26,6 +26,14 @@ export class ExperimentsController {
     return this.experimentsService.create(dto, user.userId);
   }
 
+  @Post('bulk')
+  async bulkUpsert(
+    @Body() experiments: Record<string, unknown>[],
+    @CurrentUser() user: RequestUser,
+  ) {
+    return this.experimentsService.bulkUpsert(experiments, user.userId);
+  }
+
   @Get()
   async findAll(
     @CurrentUser() user: RequestUser,

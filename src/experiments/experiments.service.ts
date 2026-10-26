@@ -158,4 +158,47 @@ export class ExperimentsService {
     await (experiment as ExperimentDocument).save();
     return { success: true, message: 'Đã xóa thí nghiệm thành công.' };
   }
+
+  async bulkUpsert(
+    experiments: Record<string, unknown>[],
+    ownerId?: string,
+  ): Promise<{ success: boolean; count: number }> {
+    if (!Array.isArray(experiments) || experiments.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const operations = experiments.map((exp) => {
+      const clientId = String(exp['id'] || exp['clientId'] || randomUUID());
+      const algorithm =
+        typeof exp['algorithm'] === 'string'
+          ? {
+              type: exp['algorithm'],
+              version: '1.0.0',
+              config: { degree: exp['degree'], lambda: exp['lambda'] },
+            }
+          : exp['algorithm'];
+
+      return {
+        updateOne: {
+          filter: { clientId },
+          update: {
+            $set: {
+              ...exp,
+              clientId,
+              algorithm,
+              ownerId: ownerId || exp['ownerId'] || 'anonymous_user',
+              syncVersion: Number(exp['syncVersion'] || 1),
+            },
+          },
+          upsert: true,
+        },
+      };
+    });
+
+    const result = await this.experimentModel.bulkWrite(operations);
+    return {
+      success: true,
+      count: (result.upsertedCount || 0) + (result.modifiedCount || 0),
+    };
+  }
 }
