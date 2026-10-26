@@ -48,13 +48,14 @@ export class TrainingRun {
   experimentId: MongooseSchema.Types.ObjectId;
 
   @Prop({
+    type: String,
     required: true,
     enum: ['queued', 'running', 'paused', 'completed', 'cancelled', 'failed'],
     default: 'queued',
   })
   status: TrainingRunStatus;
 
-  @Prop({ required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
+  @Prop({ type: String, required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
   algorithmType: TrainingAlgorithmType;
 
   @Prop({ required: true })

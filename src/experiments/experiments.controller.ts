@@ -21,28 +21,28 @@ export class ExperimentsController {
   @Post()
   async create(
     @Body() dto: CreateExperimentDto,
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.experimentsService.create(dto, user.userId);
+    return this.experimentsService.create(dto, user?.userId || 'anonymous_user');
   }
 
   @Post('bulk')
   async bulkUpsert(
     @Body() experiments: Record<string, unknown>[],
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user?: RequestUser,
   ) {
-    return this.experimentsService.bulkUpsert(experiments, user.userId);
+    return this.experimentsService.bulkUpsert(experiments, user?.userId || 'anonymous_user');
   }
 
   @Get()
   async findAll(
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user?: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
-    return this.experimentsService.findAll(user.userId, pageNum, limitNum);
+    return this.experimentsService.findAll(user?.userId || 'anonymous_user', pageNum, limitNum);
   }
 
   @Get(':id')

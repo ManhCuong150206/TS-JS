@@ -14,13 +14,13 @@ export class SyncOperation {
   @Prop({ required: true, trim: true, unique: true, index: true })
   idempotencyKey: string;
 
-  @Prop({ required: true, enum: ['experiment', 'dataset', 'trainingRun'] })
+  @Prop({ type: String, required: true, enum: ['experiment', 'dataset', 'trainingRun'] })
   entityType: SyncEntityType;
 
   @Prop({ required: true, trim: true, index: true })
   entityClientId: string;
 
-  @Prop({ required: true, enum: ['create', 'update', 'delete'] })
+  @Prop({ type: String, required: true, enum: ['create', 'update', 'delete'] })
   action: SyncAction;
 
   @Prop({ required: true, default: 1 })
@@ -30,6 +30,7 @@ export class SyncOperation {
   serverVersion: number;
 
   @Prop({
+    type: String,
     required: true,
     enum: ['applied', 'conflict', 'rejected', 'duplicate', 'error'],
     default: 'applied',

@@ -7,7 +7,7 @@ export type ExperimentStatus = 'draft' | 'ready' | 'running' | 'completed' | 'er
 
 @Schema({ _id: false })
 export class AlgorithmInfo {
-  @Prop({ required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
+  @Prop({ type: String, required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
   type: AlgorithmType;
 
   @Prop({ default: '1.0.0' })
@@ -21,7 +21,7 @@ export const AlgorithmInfoSchema = SchemaFactory.createForClass(AlgorithmInfo);
 
 @Schema({ _id: false })
 export class PreprocessingConfig {
-  @Prop({ enum: ['reject', 'drop-rows', 'mean-imputation'], default: 'reject' })
+  @Prop({ type: String, enum: ['reject', 'drop-rows', 'mean-imputation'], default: 'reject' })
   missingValues: string;
 
   @Prop({ default: false })
@@ -52,7 +52,7 @@ export class Experiment {
   @Prop({ trim: true, maxlength: 1000, default: '' })
   description?: string;
 
-  @Prop({ enum: ['draft', 'ready', 'running', 'completed', 'error'], default: 'draft', index: true })
+  @Prop({ type: String, enum: ['draft', 'ready', 'running', 'completed', 'error'], default: 'draft', index: true })
   status: ExperimentStatus;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Dataset', required: false, index: true })
