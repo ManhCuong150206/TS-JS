@@ -168,7 +168,8 @@ export class ExperimentsService {
     }
 
     const operations = experiments.map((exp) => {
-      const clientId = String(exp['id'] || exp['clientId'] || randomUUID());
+      const rawId = exp['id'] ?? exp['clientId'];
+      const clientId = typeof rawId === 'string' && rawId ? rawId : randomUUID();
       const algorithm =
         typeof exp['algorithm'] === 'string'
           ? {

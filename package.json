@@ -8,6 +8,10 @@
   "type": "module",
   "scripts": {
     "build": "nest build",
+    "build:web": "npm --prefix FE/FE-hoiquy3d run build",
+    "build:all": "npm run build && npm run build:web",
+    "docker:up": "docker compose --env-file .env.compose up --build",
+    "docker:down": "docker compose --env-file .env.compose down",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

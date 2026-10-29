@@ -7,11 +7,15 @@ async function bootstrap() {
   // Cấu hình tiền tố phiên bản API theo đặc tả (/api/v1)
   app.setGlobalPrefix('api/v1');
 
-  // Cho phép CORS cho frontend kết nối
+  // Frontend production được phục vụ cùng origin bởi Nginx; chỉ cho phép dev origin.
+  const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: '*',
+    origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    credentials: false,
   });
 
   const port = process.env.PORT || 3000;

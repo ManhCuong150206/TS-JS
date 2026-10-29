@@ -1,8 +1,9 @@
 # Đặc tả yêu cầu — Hệ thống thực nghiệm và trực quan hóa quá trình học của mô hình hồi quy
 
-- **Trạng thái:** Tài liệu yêu cầu ban đầu, chưa triển khai mã nguồn
+- **Trạng thái:** Đặc tả yêu cầu và hiện trạng được cập nhật ngày 29/10/2026; frontend có prototype Angular/Three.js, backend source hiện mới là khung NestJS/Mongoose cơ bản, các API nghiệp vụ và tích hợp FE–API–MongoDB còn cần hoàn thiện
 - **Đối tượng:** Nhóm 6 thành viên; đồ án học tập, tiểu luận và thuyết trình
-- **Ngôn ngữ triển khai đề xuất:** TypeScript thống nhất ở frontend, backend và kiểm thử
+- **Tài khoản:** Không yêu cầu đăng ký/đăng nhập; người dùng mở web và sử dụng trực tiếp
+- **Ngôn ngữ triển khai:** Giảng viên đã cho phép TypeScript; thống nhất dùng TypeScript cho mã nguồn frontend, backend và kiểm thử. JavaScript trong dist là kết quả biên dịch, không phải nguồn để phát triển
 - **Cổng truy cập dự kiến:** HTTPS trên cổng 443
 
 ## 1. Tóm tắt đề tài
@@ -19,7 +20,7 @@ Xây dựng một web app 3D cho phép người dùng nhập dữ liệu hoặc 
 4. Cho phép chuẩn bị dữ liệu, cấu hình, chạy và xem thực nghiệm cơ bản offline; đồng bộ thay đổi lên MongoDB khi kết nối được khôi phục.
 5. Có API được mô tả, xác thực dữ liệu đầu vào và kiểm thử tự động ở nhiều mức.
 6. Có thể khởi chạy hệ thống bằng Docker Compose; truy cập qua HTTPS cổng 443 trong môi trường trình diễn/triển khai.
-7. Toàn bộ mã ứng dụng và kiểm thử dùng cùng một ngôn ngữ. Đề xuất chuyển sang TypeScript xuyên suốt frontend, backend và tester; chỉ chốt sau khi giảng viên xác nhận TypeScript được chấp nhận thay JavaScript. TypeScript biên dịch thành JavaScript nhưng mã nguồn TypeScript không phải JavaScript thuần.
+7. Mã nguồn ứng dụng và kiểm thử thống nhất dùng TypeScript theo xác nhận của giảng viên. TypeScript được biên dịch thành JavaScript trước khi chạy trên trình duyệt/Node.js.
 
 ## 3. Phạm vi
 
@@ -28,7 +29,7 @@ Xây dựng một web app 3D cho phép người dùng nhập dữ liệu hoặc 
 - Web app responsive có không gian trực quan hóa 3D.
 - Nhập tệp dữ liệu có cấu trúc (CSV; có thể mở rộng JSON), xem trước, chọn cột mục tiêu/đặc trưng, kiểm tra và tiền xử lý cơ bản.
 - Tạo dữ liệu tổng hợp để chạy thực nghiệm không cần tệp đầu vào; có chế độ sinh dữ liệu có nhiễu và seed để tái lập.
-- Nhiều biến thể hồi quy, trước mắt đề xuất: tuyến tính đơn/đa biến, đa thức, Ridge và Lasso. Danh sách cuối cùng cần thống nhất theo phạm vi môn học và thời gian nhóm.
+- Bốn biến thể hồi quy do nhóm đề xuất: Linear Regression (hồi quy tuyến tính), Polynomial Regression (hồi quy đa thức), Ridge Regression và Lasso Regression.
 - Cấu hình thuật toán, chạy huấn luyện, theo dõi từng bước, dừng/tiếp tục/chạy từng bước, xem và lưu kết quả.
 - Chế độ offline-first cho thao tác cốt lõi; hàng đợi đồng bộ có trạng thái và xử lý xung đột.
 - API backend, MongoDB, Docker Compose, HTTPS/SSL cổng 443.
@@ -38,14 +39,14 @@ Xây dựng một web app 3D cho phép người dùng nhập dữ liệu hoặc 
 ### Ngoài phạm vi ở giai đoạn đầu
 
 - Dùng chung dữ liệu cộng tác thời gian thực nhiều người.
-- Hệ thống phân quyền nhiều cấp, thanh toán, mô hình hồi quy phi tuyến phức tạp hoặc AutoML.
+- Tài khoản, đăng nhập, phân quyền nhiều cấp, thanh toán, mô hình hồi quy phi tuyến phức tạp hoặc AutoML.
 - Đảm bảo kết quả giống hệt giữa mọi trình duyệt/phần cứng khi chạy GPU.
 - Cung cấp chứng thư SSL công khai nếu chưa có tên miền/máy chủ; môi trường phát triển có thể dùng chứng thư tự ký.
 - Use case diagram là tùy chọn, không phải đầu ra bắt buộc.
 
 ## 4. Người dùng và luồng sử dụng chính
 
-Người dùng chính là sinh viên/giảng viên thực hiện hoặc quan sát thí nghiệm. Luồng tiêu chuẩn:
+Người dùng chính là sinh viên/giảng viên thực hiện hoặc quan sát thí nghiệm. Không cần tài khoản; người dùng truy cập trực tiếp. Luồng tiêu chuẩn:
 
 1. Tạo thí nghiệm mới hoặc mở bản nháp gần đây.
 2. Chọn nhập CSV, dùng dữ liệu mẫu, hoặc tạo dữ liệu tổng hợp.
@@ -73,6 +74,8 @@ Người dùng chính là sinh viên/giảng viên thực hiện hoặc quan sá
 - Cho phép chọn cách xử lý giá trị thiếu: loại dòng hoặc thay thế bằng quy tắc đơn giản; ghi lại lựa chọn.
 - Chia tập train/test với tỷ lệ và seed được lưu; hỗ trợ chuẩn hóa khi thuật toán yêu cầu.
 - Tệp dữ liệu lớn phải có giới hạn kích thước/hàng cấu hình được; thông báo rõ khi vượt giới hạn.
+- Trước khi chọn/tải dữ liệu, hiển thị cảnh báo rằng CSV có thể chứa thông tin nhạy cảm. Ưu tiên xử lý cục bộ; trước khi gửi dữ liệu lên API/MongoDB hoặc đưa vào đồng bộ, phải thông báo rõ dữ liệu sẽ rời thiết bị và yêu cầu người dùng xác nhận.
+- Có thể cảnh báo sơ bộ khi tên cột/giá trị có vẻ chứa email, số điện thoại hoặc định danh, nhưng phải nói rõ đây chỉ là phát hiện hỗ trợ, không đảm bảo nhận diện hết dữ liệu nhạy cảm. Không ghi nội dung CSV vào log lỗi. Ví dụ cảnh báo: “Tệp có thể chứa dữ liệu cá nhân. Hãy rà soát và loại bỏ thông tin không cần thiết; việc kiểm tra tự động không thể phát hiện mọi dữ liệu nhạy cảm.”
 - Chế độ dữ liệu tổng hợp: chọn số đặc trưng, số mẫu, độ nhiễu, seed và quan hệ hồi quy để sinh dữ liệu.
 
 ### F-03. Chọn thuật toán và cấu hình
@@ -135,6 +138,8 @@ Cơ chế đề xuất: PWA + Service Worker để cache vỏ ứng dụng/tài 
 - Quy tắc xung đột giai đoạn đầu: giữ cả hai phiên bản hoặc yêu cầu chọn phiên bản; không âm thầm ghi đè. Có thể dùng last-write-wins cho trường không quan trọng nếu được ghi rõ.
 - Dữ liệu lớn: cân nhắc upload dataset riêng/chuẩn hóa sang collection; không nhồi tệp lớn vào một document MongoDB. Giới hạn và chính sách lưu trữ cần xác nhận.
 - Cảnh báo rõ người dùng nếu xóa dữ liệu cục bộ trước khi đồng bộ hoặc nếu trình duyệt xóa dữ liệu website.
+- Vì không có tài khoản, dữ liệu trên máy chủ không gắn với danh tính đăng nhập; giao diện phải giải thích rõ phạm vi lưu trữ và cách xóa dữ liệu. Không tự động tải CSV lên máy chủ khi người dùng chưa xác nhận.
+- Nếu môi trường triển khai không có lớp truy cập riêng, dữ liệu đồng bộ lên server có thể trở thành dữ liệu dùng chung cho người truy cập API/web. Mặc định khuyến nghị giữ dữ liệu thô ở trình duyệt; chỉ đồng bộ dữ liệu tổng hợp hoặc dữ liệu đã được người dùng rà soát. Không hứa bảo mật/phân tách theo người dùng khi hệ thống không có đăng nhập.
 
 ### F-08. API và trạng thái lỗi
 
@@ -150,29 +155,36 @@ Cơ chế đề xuất: PWA + Service Worker để cache vỏ ứng dụng/tài 
 - **Hiệu năng:** mục tiêu ban đầu đề xuất: thao tác giao diện phản hồi trong 200 ms với dữ liệu demo; khối lượng demo mặc định (ví dụ tối đa 10.000 hàng) không làm treo UI. Nhóm cần đo và điều chỉnh theo thiết bị trình diễn.
 - **Tính sẵn sàng:** có thể tiếp tục thao tác cốt lõi khi mất mạng; trạng thái đồng bộ minh bạch.
 - **Khả dụng:** hướng dẫn trực quan, thông báo lỗi có hướng xử lý, hỗ trợ màn hình phổ biến.
-- **Bảo mật:** HTTPS, kiểm tra đầu vào, giới hạn upload, không ghi dữ liệu nhạy cảm vào log, secrets không commit vào repository, kiểm soát CORS và headers.
+- **Bảo mật/quyền riêng tư:** HTTPS, kiểm tra đầu vào, giới hạn upload và tần suất request, không ghi dữ liệu nhạy cảm vào log, secrets không commit vào repository, CORS allowlist và security headers. Do không có đăng nhập, không lưu hoặc hiển thị dữ liệu riêng tư với giả định rằng dữ liệu được phân tách theo tài khoản.
 - **Khả năng bảo trì:** module tách lớp, schema/API có phiên bản, test chạy tự động, quy ước code và review.
 - **Tái lập:** seed, cấu hình, thuật toán, phiên bản và dữ liệu đầu vào được ghi cùng thí nghiệm.
 
 ## 7. Công nghệ đề xuất
 
-Chọn stack để giữ TypeScript nhất quán nếu giảng viên chấp thuận:
+Giảng viên đã chấp thuận TypeScript. Nhóm thống nhất dùng TypeScript cho mã nguồn frontend, backend và kiểm thử để có kiểu dữ liệu nhất quán; mã TypeScript được biên dịch thành JavaScript trước khi chạy trên trình duyệt/Node.js. Tránh khai báo explicit any; ưu tiên kiểu cụ thể, type/interface hoặc unknown cho dữ liệu chưa được xác thực.
 
-- **Frontend:** React + Vite (TypeScript), Three.js (3D), thư viện biểu đồ JS/TS, PWA/Service Worker, IndexedDB qua thư viện bọc phù hợp.
+- **Frontend:** Angular (TypeScript, theo mã nguồn FE hiện có), Three.js (3D), PWA/Service Worker, IndexedDB qua thư viện bọc phù hợp.
 - **Backend:** Node.js + NestJS (TypeScript; phù hợp với bộ khung nhóm đang dùng) hoặc Express/Fastify có cấu hình TypeScript, REST API, validation schema.
 - **Tính toán:** TypeScript chạy trong browser/Node.js sau khi biên dịch; cần benchmark và xác nhận thư viện hỗ trợ đúng các thuật toán trong phạm vi. Web Worker cho tính toán phía trình duyệt.
 - **Cơ sở dữ liệu:** MongoDB; MongoDB schema/validator hoặc Mongoose cho schema ứng dụng.
 - **Tester:** Vitest/Jest với TypeScript cho unit/integration; Playwright cho E2E; Supertest hoặc tương đương cho API.
-- **Hạ tầng:** Docker, Docker Compose, reverse proxy (Nginx/Caddy/Traefik) kết thúc TLS trên cổng 443; môi trường demo có thể dùng certificate tự ký, môi trường công khai cần chứng thư hợp lệ và domain.
+- **Hạ tầng:** Docker, Docker Compose và **Nginx** làm reverse proxy, phục vụ frontend, chuyển tiếp request đến API và kết thúc TLS trên cổng 443. Nginx là thành phần hạ tầng web, không phải engine 3D hay engine tính toán. Môi trường demo có thể dùng certificate tự ký; môi trường công khai cần chứng thư hợp lệ và domain.
 - **CI:** chạy lint, unit/integration/E2E phù hợp và build image khi có nền tảng CI.
 
-### Ghi chú bắt buộc về “EngineNet”
+### Quyết định về Nginx và ngôn ngữ
 
-Tài liệu yêu cầu của người học nêu bắt buộc sử dụng **EngineNet**, nhưng tên này chưa đủ để xác định chính xác thư viện/package nào. Tra cứu tên công khai cho thấy có nhiều kết quả không tương ứng một engine JavaScript 3D/ML rõ ràng; vì vậy chưa thể gán EngineNet vào vai trò cụ thể mà không có nguy cơ chọn sai. Nhóm cần đối chiếu đề cương, link tài liệu hoặc tên package chính xác với giảng viên trước khi khóa stack. Trong tài liệu này, EngineNet được đánh dấu là **ràng buộc cần xác nhận**, không thay thế bằng thư viện khác. Nếu EngineNet là engine tính toán, engine 3D hay framework cụ thể, cần xác định adapter/tích hợp và khả năng chạy offline. Việc dùng TypeScript cũng cần được giảng viên chấp thuận riêng nếu yêu cầu môn học ghi rõ JavaScript.
+Theo xác nhận của giảng viên, dùng **Nginx** cho lớp reverse proxy/TLS; Three.js là engine hiển thị 3D. TypeScript được phép và là ngôn ngữ thống nhất cho mã nguồn frontend, backend và kiểm thử.
 
-### Ghi chú về số phức và 3D
+### Áp dụng số phức trong chuyển động 3D
 
-Phép nhân số phức biểu diễn phép quay 2D rất tự nhiên; số phức thông thường không biểu diễn đầy đủ mọi phép quay 3D. Để giữ đúng ràng buộc “chuyển động sử dụng số phức thay cho lượng giác”, cần làm rõ chuyển động nào được yêu cầu. Đề xuất: dùng phép nhân số phức cho các chuyển động/quay 2D hoặc mặt phẳng số; với camera/đối tượng 3D dùng quaternion hoặc cơ chế của engine, trừ khi đề bài yêu cầu cụ thể một biểu diễn khác. Đây là điểm cần trình bày trung thực trong tiểu luận, tránh tuyên bố mọi phép quay 3D đều dùng số phức thông thường.
+Số phức được dùng thực chất trong các phép quay trên mặt phẳng và các mặt phẳng con của không gian 3D. Không tuyên bố một số phức đơn lẻ biểu diễn được mọi phép quay 3D.
+
+- Với điểm 2D `z = x + iy`, quay một góc được biểu diễn bằng `z' = z · r`, trong đó `r = cos(θ) + i sin(θ)` là số phức đơn vị. Ví dụ `r = 0 + i` quay điểm 90° ngược chiều kim đồng hồ: `(x, y) → (-y, x)`.
+- Với điểm 3D, chọn trục quay và hai vector đơn vị vuông góc `u`, `v` tạo mặt phẳng vuông góc với trục. Chiếu điểm lên mặt phẳng thành tọa độ phức `z = dot(p,u) + i·dot(p,v)`, nhân với `r`, rồi ghép lại với thành phần dọc trục. Cách này áp dụng được cho quay quanh trục bất kỳ; phần thành phần theo trục được giữ nguyên.
+- Quỹ đạo camera (orbit), quay đối tượng, quay trục tọa độ và chuyển động trên các mặt phẳng của scene có thể dùng phép nhân phức trên từng cặp tọa độ. Một phép quay 3D tổng quát được ghép từ các phép quay mặt phẳng; thứ tự ghép phải cố định và được ghi rõ.
+- Chuyển `θ` sang `r` thường cần `sin/cos` một lần tại điểm nhập góc. Sau đó, các bước animation có thể cập nhật bằng phép nhân phức lặp lại thay vì gọi lượng giác mỗi frame. Chuẩn hóa `r` định kỳ để hạn chế sai số tích lũy. Nếu yêu cầu cấm cả lần chuyển đổi ban đầu, giao diện phải nhận trực tiếp cặp `(a,b)` với `a²+b²=1` hoặc dùng bảng tra đã chuẩn bị; đây là chế độ khó dùng hơn và không nên mặc định.
+- Three.js nhận quaternion/matrix để dựng camera và scene. Adapter có thể tạo các phép quay mặt phẳng bằng số phức, ghép thành quaternion/matrix rồi giao cho Three.js render. Quaternion ở đây là định dạng tích hợp/render, không thay thế phần tính toán số phức đã áp dụng.
+- Cần kiểm chứng bằng test: độ dài được bảo toàn khi quay, quay ngược trả gần về điểm ban đầu, trục quay không đổi, và kết quả khớp phép quay ma trận tham chiếu trong sai số cho phép. Khi trình bày, nêu rõ phần nào dùng số phức, phần nào chuyển sang quaternion/matrix và sai số số học.
 
 ## 8. Kiến trúc module và ưu tiên
 
@@ -199,7 +211,7 @@ Phép nhân số phức biểu diễn phép quay 2D rất tự nhiên; số ph�
 ### `experiments`
 
 - `_id`: ObjectId phía MongoDB; `clientId`: UUID duy nhất phía client.
-- `name`, `description`, `status`, `ownerId` (nếu có tài khoản).
+- `name`, `description`, `status`. Giai đoạn hiện tại không có `ownerId` vì không có tài khoản.
 - `algorithm`: `type`, `version`, `config` (union có discriminator theo loại hồi quy).
 - `datasetRef`, `targetColumn`, `featureColumns`, `preprocessing`, `splitConfig`, `seed`.
 - `createdAt`, `updatedAt`, `deletedAt`, `syncVersion`.
@@ -221,10 +233,10 @@ Phép nhân số phức biểu diễn phép quay 2D rất tự nhiên; số ph�
 
 ### `syncOperations` (nếu cần audit riêng)
 
-- `operationId`, `entityType`, `entityClientId`, operation, version, status, attempts, lastError, timestamps.
+- `operationId`, `entityType`, `entityClientId`, operation, version, status, attempts, lastError, timestamps. Không có owner/account reference trong giai đoạn hiện tại.
 - Idempotency index duy nhất; index theo `updatedAt`, trạng thái và tham chiếu thường truy vấn.
 
-**Schema theo trường hợp:** `algorithm.type` là discriminator; `config` được validate theo đúng loại. Không dùng một nhóm trường không giới hạn/không kiểm tra cho mọi thuật toán. Dataset lớn lưu ngoài document (hoặc tách chunk/collection theo thiết kế); document MongoDB có giới hạn kích thước. Cần chốt chính sách tài khoản/người sở hữu, retention và xóa dữ liệu trước khi thiết kế schema cuối.
+**Schema theo trường hợp:** `algorithm.type` chỉ nhận `linear`, `polynomial`, `ridge` hoặc `lasso`; `config` được validate theo đúng loại. Không dùng một nhóm trường không giới hạn/không kiểm tra cho mọi thuật toán. Dataset lớn lưu ngoài document (hoặc tách chunk/collection theo thiết kế); document MongoDB có giới hạn kích thước. Cần chốt retention và quy trình xóa dữ liệu trước khi thiết kế schema cuối.
 
 ## 10. API dự kiến
 
@@ -241,13 +253,14 @@ Phép nhân số phức biểu diễn phép quay 2D rất tự nhiên; số ph�
 | GET | `/api/v1/sync/changes?since=...` | lấy thay đổi từ máy chủ |
 | GET | `/api/v1/experiments/:id/export` | xuất kết quả/thí nghiệm |
 
-API chính thức cần OpenAPI, quy tắc phân trang, payload limits, mã lỗi, xác thực, CORS và phiên bản hóa. Nếu chạy huấn luyện hoàn toàn ở browser, endpoint training-runs có thể chỉ nhận/lưu kết quả và trạng thái thay vì tính toán ở server; cần chốt cách phân chia này.
+API chính thức cần OpenAPI, quy tắc phân trang, payload limits, mã lỗi, CORS và phiên bản hóa. Giai đoạn hiện tại không có đăng nhập; API không được giả lập xác thực bằng user ID do client tự gửi. Cần giới hạn request, payload, upload và cấu hình CORS phù hợp vì API không có danh tính người dùng để phân quyền dữ liệu. Nếu chạy huấn luyện hoàn toàn ở browser, endpoint training-runs có thể chỉ nhận/lưu kết quả và trạng thái thay vì tính toán ở server; cần chốt cách phân chia này.
 
 ## 11. SSL/TLS và Docker
 
 - Ứng dụng được truy cập qua `https://<domain-hoặc-host>/` trên **cổng TCP 443**.
 - Reverse proxy nhận HTTPS trên 443 và chuyển tiếp nội bộ đến frontend/API; MongoDB không public ra Internet.
 - MongoDB chỉ trong network nội bộ Docker; credentials lấy từ secret/environment không commit.
+- Vì ứng dụng hiện không có tài khoản, Nginx phục vụ frontend và chỉ proxy endpoint `POST /api/v1/experiments/bulk` để đồng bộ metadata sau khi người dùng xác nhận; có rate limit. Các API đọc dữ liệu và upload CSV không được public. API và MongoDB không publish port trực tiếp; MongoDB chỉ ở mạng Docker nội bộ.
 - Có healthcheck, volume dữ liệu bền vững, cấu hình môi trường development/demo/production và hướng dẫn backup/restore.
 - Phát triển local: chứng thư tự ký hoặc dev proxy; trình duyệt có thể hiện cảnh báo. Trình diễn qua domain công khai: dùng certificate được trình duyệt tin cậy và gia hạn tự động.
 - PWA/offline cần HTTPS trong môi trường trình duyệt thông thường (localhost là ngoại lệ phát triển); SSL là một phần của yêu cầu offline, không chỉ bảo mật API.
@@ -328,7 +341,7 @@ API chính thức cần OpenAPI, quy tắc phân trang, payload limits, mã lỗ
 |---|---|---|
 | 1. Điều phối/kiến trúc | yêu cầu, kiến trúc, tích hợp, tài liệu và demo | ADR, API contract, kế hoạch tích hợp |
 | 2. Frontend & UX | màn hình thí nghiệm, import, trạng thái, accessibility | luồng UI và component |
-| 3. 3D visualization | Three.js/EngineNet sau khi xác nhận, camera, lớp dữ liệu/loss | scene 3D, fallback và hiệu năng |
+| 3. 3D visualization | Three.js, chuyển động mặt phẳng bằng số phức, adapter quaternion/matrix cho camera và scene | scene 3D, fallback, kiểm chứng toán học và hiệu năng |
 | 4. Regression engine | thuật toán, metric, seed, Web Worker | engine có API ổn định và unit tests |
 | 5. Backend & MongoDB | REST, schema, validation, persistence, sync endpoints | API/OpenAPI, DB schema/index |
 | 6. QA/DevOps/offline | PWA/IndexedDB/sync E2E, Docker, TLS, test pipeline | test plan, Compose, hướng dẫn SSL |
@@ -337,7 +350,7 @@ Các vai trò có thể luân phiên; người phụ trách module không làm v
 
 ## 14. Lộ trình đề xuất
 
-1. **Chốt yêu cầu:** xác nhận EngineNet, thuật toán, cách chạy tính toán, quy mô demo và chính sách dữ liệu.
+1. **Chốt yêu cầu:** chốt thuật toán, cách chạy tính toán, quy mô demo và chính sách dữ liệu; Nginx là reverse proxy/TLS, TypeScript được dùng thống nhất theo xác nhận của giảng viên.
 2. **Thiết kế:** sơ đồ module, API contract, discriminator/schema, prototype mặt trực quan, test strategy.
 3. **Vertical slice:** tạo dataset mẫu → chạy một thuật toán → xem 3D/metric → lưu API/Mongo → HTTPS 443.
 4. **Mở rộng engine và dữ liệu:** thêm các biến thể hồi quy, CSV, validation, preprocessing.
@@ -346,9 +359,9 @@ Các vai trò có thể luân phiên; người phụ trách module không làm v
 
 ## 15. Rủi ro và quyết định cần khóa
 
-- **EngineNet chưa xác định:** cần tên chính xác/link/package và vai trò bắt buộc; đây là blocker của lựa chọn engine 3D/ML.
+- **Vai trò công nghệ:** Nginx đảm nhiệm reverse proxy/TLS; không dùng hoặc mô tả Nginx như engine 3D/ML. Three.js đảm nhiệm hiển thị scene.
 - **“Toàn bộ quá trình” quá rộng:** giới hạn thành dữ liệu, tham số, loss, dự đoán, residual và metric; projection được gắn nhãn khi nhiều chiều.
-- **Số phức trong chuyển động 3D:** cần xác định yêu cầu của giảng viên về áp dụng số phức; quaternion là biểu diễn tiêu chuẩn cho quay 3D tổng quát.
+- **Số phức trong chuyển động 3D:** dùng số phức cho phép quay/chuyển động trên các mặt phẳng, kể cả mặt phẳng vuông góc với trục 3D bất kỳ; adapter chuyển phép quay sang quaternion/matrix cho Three.js. Không dùng số phức đơn lẻ để khẳng định biểu diễn toàn bộ phép quay 3D.
 - **Offline và đồng bộ dữ liệu lớn:** cần giới hạn kích thước CSV, retention, quyền riêng tư và chính sách upload.
 - **Chạy ở client hay server:** đề xuất chạy demo nhỏ phía browser để offline, backend lưu/đồng bộ; nếu cần kết quả server-side thì thêm job API và xử lý khác biệt trạng thái.
 - **SSL 443:** chứng thư production phụ thuộc domain/máy chủ; local self-signed không chứng minh được trust công khai.
@@ -356,12 +369,8 @@ Các vai trò có thể luân phiên; người phụ trách module không làm v
 
 ## 16. Câu hỏi còn mở cho buổi chốt với nhóm/giảng viên
 
-1. EngineNet chính xác là thư viện/engine nào (đường dẫn tài liệu hoặc package) và phải dùng cho phần nào?
-2. Giảng viên có chấp thuận dùng TypeScript cho toàn bộ mã nguồn thay JavaScript thuần không?
-3. Bắt buộc những loại hồi quy nào, hay nhóm được tự đề xuất danh mục?
-4. “Dùng số phức thay lượng giác” áp dụng cho chuyển động/hiển thị 2D, camera 3D, hay phần cụ thể nào của thuật toán?
-5. Thí nghiệm có tài khoản người dùng không, dữ liệu CSV có thể nhạy cảm không, và kích thước dữ liệu tối đa là bao nhiêu?
-6. Môi trường triển khai/domain/certificate và yêu cầu hỗ trợ trình duyệt là gì?
+1. Kích thước dữ liệu CSV tối đa và giới hạn lưu trữ cần đặt ở mức nào?
+2. Môi trường triển khai/domain/certificate và yêu cầu hỗ trợ trình duyệt là gì?
 
 ## 17. Thuật ngữ
 
@@ -372,3 +381,21 @@ Các vai trò có thể luân phiên; người phụ trách module không làm v
 - **Idempotency:** gửi lại cùng thao tác không tạo kết quả trùng.
 - **Discriminator:** trường phân biệt loại hồi quy để validate cấu hình theo schema tương ứng.
 - **TLS/SSL:** mã hóa kết nối HTTPS; SSL là cách gọi phổ biến, TLS là giao thức hiện đại.
+
+## 18. Hiện trạng repository được rà soát (29/10/2026)
+
+Phần này là ảnh chụp hiện trạng tại ngày rà soát, không thay thế yêu cầu nghiệm thu ở các mục trên. Cần cập nhật lại khi nhóm khôi phục hoặc chuyển mã nguồn.
+
+- **Frontend (`FE`):** có prototype Angular/TypeScript với Three.js, nhập CSV, engine hồi quy phía trình duyệt, Web Worker, IndexedDB và các khu vực giao diện cho dữ liệu, điều khiển huấn luyện, trực quan hóa, kết quả và thí nghiệm. Cần hoàn thiện luồng tích hợp API và kiểm thử hành vi đầu-cuối.
+- **Backend (`src` ở thư mục gốc):** hiện có khung NestJS, cấu hình Mongoose và route mẫu `Hello World!`. Chưa thấy trong source hiện tại các module API nghiệp vụ dataset, experiment, training run và sync.
+- **`database/backend/dist`:** còn mã JavaScript đã biên dịch cho kết nối MongoDB, script kiểm tra kết nối và model Dataset, Experiment, Lesson, TrainingRun. Thư mục `database/backend/src` không có trong checkout đã rà soát; `dist` không phải nguồn TypeScript để tiếp tục bảo trì hoặc build lại.
+- **MongoDB và môi trường:** các file `.env` ở thư mục gốc và `database/backend` là hai file riêng. Nhóm cần thống nhất backend chạy ở đâu và cấu hình nạp đúng một bộ biến môi trường; không commit mật khẩu/secret.
+- **Ước lượng tiến độ:** khoảng 35% ở thời điểm rà soát, chỉ là ước lượng định hướng dựa trên prototype FE và mức tích hợp backend hiện thấy, không phải chỉ số nghiệm thu chính thức.
+
+### Việc cần làm tiếp theo
+
+1. Xác nhận với nhóm xem source backend nghiệp vụ bị chuyển/xóa hay nhóm chủ động gộp backend; khôi phục source TypeScript hoặc thống nhất nơi đặt source chính.
+2. Hoàn thiện API và schema dataset, experiment, training run; nối frontend với API và kiểm tra document được ghi vào đúng MongoDB database.
+3. Bổ sung validation DTO, phân quyền phù hợp phạm vi, upload có giới hạn, xử lý lỗi và đồng bộ offline có kiểm thử.
+4. Sửa `.env.example` để liệt kê biến cần thiết nhưng không chứa secret; cập nhật README để phản ánh frontend Angular hiện có.
+5. Bổ sung test cho công thức hồi quy, CSV, API/DB, offline/sync và luồng FE–API; sau đó mới đánh giá lại tiến độ.

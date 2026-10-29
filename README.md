@@ -4,7 +4,34 @@ Web app trực quan hóa quá trình học của mô hình hồi quy trong khôn
 
 - **Backend:** NestJS + TypeScript
 - **Database:** MongoDB (Mongoose)
-- **Frontend:** (sẽ bổ sung)
+- **Frontend:** Angular + Three.js; hỗ trợ PWA và IndexedDB
+- **Triển khai:** Docker Compose + Nginx + HTTPS
+
+## Chạy toàn hệ thống bằng Docker
+
+Cần cài Docker Desktop và bật Docker Engine. Tạo file cấu hình Docker riêng để giữ nguyên `.env` đang dùng cho backend local:
+
+```bash
+copy .env.compose.example .env.compose
+```
+
+Mở `.env.compose`, thay `MONGO_INITDB_ROOT_PASSWORD` bằng mật khẩu ngẫu nhiên dài và cập nhật cùng mật khẩu đó trong `MONGODB_URI` (phần trước `@mongo`). Nên dùng mật khẩu chữ/số hoặc URL-encode ký tự đặc biệt trong URI. Sau đó chạy:
+
+```bash
+npm run docker:up
+```
+
+Mở `https://localhost`. Lần chạy đầu Compose tạo chứng thư tự ký cho localhost; trình duyệt sẽ cảnh báo vì chứng thư chưa được tin cậy. Chỉ dùng chứng thư này khi phát triển/demo. Để tắt các container, chạy `npm run docker:down`; dữ liệu MongoDB và tệp tải lên vẫn còn trong Docker volumes. Muốn xóa cả dữ liệu đã lưu, dùng `docker compose --env-file .env.compose down -v`.
+
+Nginx công khai giao diện qua cổng 80/443 và chỉ cho phép POST đồng bộ metadata tại `/api/v1/experiments/bulk`; các API đọc dữ liệu và upload CSV bị chặn ở reverse proxy. API/MongoDB không publish port trực tiếp. Không có tài khoản nên dữ liệu đã đồng bộ nằm trong DB chung của dự án, quản trị viên backend có thể truy cập. CSV thô được xử lý trong trình duyệt và không được frontend gửi lên server. IndexedDB không mã hóa dữ liệu; người dùng chung browser profile có thể truy cập, vì vậy không dùng dữ liệu nhạy cảm trên thiết bị dùng chung.
+
+Các lệnh build thủ công:
+
+```bash
+npm run build       # backend
+npm run build:web   # frontend Angular trong FE/FE-hoiquy3d
+npm run build:all   # cả hai
+```
 
 ---
 

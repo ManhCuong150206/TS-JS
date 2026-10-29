@@ -27,7 +27,14 @@ export class DatasetsController {
    * Validate dung lượng, định dạng, cấu trúc và lưu vào thư mục lưu trữ
    */
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: Number(process.env.MAX_DATASET_FILE_SIZE || 10 * 1024 * 1024),
+        files: 1,
+      },
+    }),
+  )
   async uploadFile(
     @UploadedFile() file: UploadedMulterFile,
     @Body('name') name: string,
