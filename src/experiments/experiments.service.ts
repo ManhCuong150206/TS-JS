@@ -56,7 +56,23 @@ export class ExperimentsService {
     }
   }
 
+  private validateSynthetic(value: unknown): void {
+    if (value === undefined) return;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new BadRequestException('synthetic phải là object.');
+    const c = value as Record<string, unknown>;
+    const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+    if (!['linear', 'curved', 'correlated', 'sparse'].includes(String(c.kind)) || c.version !== 1 ||
+        !finite(c.sampleCount) || !Number.isInteger(c.sampleCount) || c.sampleCount < 2 ||
+        !finite(c.featureCount) || !Number.isInteger(c.featureCount) || c.featureCount < 1 ||
+        !finite(c.noise) || c.noise < 0 || c.noise > 50 || !finite(c.seed) || !Number.isInteger(c.seed) ||
+        !finite(c.trainRatio) || c.trainRatio < .01 || c.trainRatio > .99 ||
+        Math.floor(c.sampleCount*c.trainRatio) < 1 || Math.floor(c.sampleCount*c.trainRatio) >= c.sampleCount) {
+      throw new BadRequestException('Cấu hình bộ sinh dữ liệu không hợp lệ hoặc phiên bản chưa hỗ trợ.');
+    }
+  }
+
   async create(dto: CreateExperimentDto, ownerId?: string): Promise<Experiment> {
+    this.validateSynthetic(dto.synthetic);
     // 1. Kiểm tra datasetId có hợp lệ và tồn tại không
     let datasetObjectId: Types.ObjectId;
     try {
@@ -140,6 +156,7 @@ export class ExperimentsService {
   }
 
   async update(id: string, dto: UpdateExperimentDto): Promise<Experiment> {
+    this.validateSynthetic(dto.synthetic);
     const experiment = await this.findOne(id);
 
     if (dto.algorithm?.type && dto.algorithm?.config) {
@@ -168,6 +185,7 @@ export class ExperimentsService {
     }
 
     const operations = experiments.map((exp) => {
+      this.validateSynthetic(exp['synthetic']);
       const clientId = String(exp['id'] || exp['clientId'] || randomUUID());
       const algorithm =
         typeof exp['algorithm'] === 'string'

@@ -41,8 +41,23 @@ export class SplitConfig {
 
 export const SplitConfigSchema = SchemaFactory.createForClass(SplitConfig);
 
+@Schema({ _id: false })
+export class SyntheticConfig {
+  @Prop({ required: true, enum: ['linear', 'curved', 'correlated', 'sparse'] }) kind: string;
+  @Prop({ required: true, enum: [1] }) version: number;
+  @Prop({ required: true, min: 2 }) sampleCount: number;
+  @Prop({ required: true, min: 1 }) featureCount: number;
+  @Prop({ required: true, min: 0, max: 50 }) noise: number;
+  @Prop({ required: true }) seed: number;
+  @Prop({ required: true, min: 0.01, max: 0.99 }) trainRatio: number;
+}
+export const SyntheticConfigSchema = SchemaFactory.createForClass(SyntheticConfig);
+
 @Schema({ timestamps: true, collection: 'experiments' })
 export class Experiment {
+  @Prop({ type: SyntheticConfigSchema, required: false })
+  synthetic?: SyntheticConfig;
+
   @Prop({ required: true, trim: true, unique: true, index: true })
   clientId: string;
 

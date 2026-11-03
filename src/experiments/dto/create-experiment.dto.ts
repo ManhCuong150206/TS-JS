@@ -1,6 +1,7 @@
-import { AlgorithmType, ExperimentStatus } from '../schemas/experiment.schema.js';
+import { AlgorithmType, ExperimentStatus, SyntheticConfig } from '../schemas/experiment.schema.js';
 
 export class CreateExperimentDto {
+  synthetic?: SyntheticConfig;
   clientId?: string;
   name: string;
   description?: string;
@@ -25,6 +26,7 @@ export class CreateExperimentDto {
 }
 
 export class UpdateExperimentDto {
+  synthetic?: SyntheticConfig;
   name?: string;
   description?: string;
   status?: ExperimentStatus;
