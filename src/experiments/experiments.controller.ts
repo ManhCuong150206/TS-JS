@@ -39,27 +39,29 @@ export class ExperimentsController {
     @CurrentUser() user?: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('includeDeleted') includeDeleted?: string,
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
-    return this.experimentsService.findAll(user?.userId || 'anonymous_user', pageNum, limitNum);
+    return this.experimentsService.findAll(user?.userId || 'anonymous_user', pageNum, limitNum, includeDeleted === 'true');
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.experimentsService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user?:RequestUser) {
+    return this.experimentsService.findOne(id,user?.userId);
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateExperimentDto,
+    @CurrentUser() user?:RequestUser,
   ) {
-    return this.experimentsService.update(id, dto);
+    return this.experimentsService.update(id, dto,user?.userId);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.experimentsService.remove(id);
+  async remove(@Param('id') id: string,@CurrentUser() user?:RequestUser) {
+    return this.experimentsService.remove(id,user?.userId);
   }
 }

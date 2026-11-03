@@ -117,7 +117,7 @@ export class DatasetsService {
         {},
         dto,
         {
-          clientId,
+          clientId, storage:undefined,
           ownerId: ownerId || dto.ownerId || 'anonymous_user',
           status: 'ready',
           syncVersion: 1,
@@ -132,9 +132,8 @@ export class DatasetsService {
    */
   async findAll(ownerId?: string, page = 1, limit = 20) {
     const filter: Record<string, unknown> = { deletedAt: { $exists: false } };
-    if (ownerId && ownerId !== 'anonymous_user') {
-      filter.$or = [{ ownerId }, { ownerId: 'anonymous_user' }];
-    }
+    filter.ownerId=ownerId||'anonymous_user';
+    page=Number.isFinite(page)?Math.max(1,Math.floor(page)):1;limit=Number.isFinite(limit)?Math.min(100,Math.max(1,Math.floor(limit))):20;
 
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
@@ -154,8 +153,9 @@ export class DatasetsService {
   /**
    * Lấy chi tiết dataset theo MongoDB _id hoặc clientId
    */
-  async findOne(id: string): Promise<Dataset> {
+  async findOne(id: string, ownerId = 'anonymous_user'): Promise<Dataset> {
     const dataset = await this.datasetModel.findOne({
+      ownerId,
       $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : undefined }, { clientId: id }],
       deletedAt: { $exists: false },
     }).exec();
@@ -169,13 +169,15 @@ export class DatasetsService {
   /**
    * Lấy đường dẫn tệp để tải về hoặc đọc nội dung
    */
-  async getFilePath(id: string): Promise<{ filePath: string; originalFileName: string }> {
-    const dataset = await this.findOne(id);
+  async getFilePath(id: string, ownerId = 'anonymous_user'): Promise<{ filePath: string; originalFileName: string }> {
+    const dataset = await this.findOne(id,ownerId);
     if (!dataset.storage?.key) {
       throw new NotFoundException('Dataset này không lưu trữ tệp trên máy chủ.');
     }
 
-    const filePath = path.join(this.storageDir, dataset.storage.key);
+    if(!/^[a-f0-9-]{36}\.csv$/i.test(dataset.storage.key))throw new NotFoundException('Khóa tệp không hợp lệ.');
+    const filePath = path.resolve(this.storageDir, dataset.storage.key);
+    if(!filePath.startsWith(this.storageDir+path.sep))throw new NotFoundException('Đường dẫn không hợp lệ.');
     try {
       await fs.access(filePath);
     } catch {
@@ -191,8 +193,8 @@ export class DatasetsService {
   /**
    * Xóa mềm dataset
    */
-  async remove(id: string): Promise<{ success: boolean; message: string }> {
-    const dataset = await this.findOne(id);
+  async remove(id: string, ownerId = 'anonymous_user'): Promise<{ success: boolean; message: string }> {
+    const dataset = await this.findOne(id,ownerId);
     dataset.deletedAt = new Date();
     await (dataset as DatasetDocument).save();
     return { success: true, message: 'Đã xóa dataset thành công.' };

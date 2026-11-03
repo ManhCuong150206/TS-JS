@@ -27,7 +27,7 @@ export class DatasetsController {
    * Validate dung lượng, định dạng, cấu trúc và lưu vào thư mục lưu trữ
    */
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file',{limits:{fileSize:10*1024*1024,files:1}}))
   async uploadFile(
     @UploadedFile() file: UploadedMulterFile,
     @Body('name') name: string,
@@ -65,8 +65,8 @@ export class DatasetsController {
    * API Lấy chi tiết dataset theo ID
    */
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.datasetsService.findOne(id);
+  async findOne(@Param('id') id: string,@CurrentUser() user:RequestUser) {
+    return this.datasetsService.findOne(id,user.userId);
   }
 
   /**
@@ -76,8 +76,9 @@ export class DatasetsController {
   async downloadFile(
     @Param('id') id: string,
     @Res() res: Response,
+    @CurrentUser() user:RequestUser,
   ) {
-    const { filePath, originalFileName } = await this.datasetsService.getFilePath(id);
+    const { filePath, originalFileName } = await this.datasetsService.getFilePath(id,user.userId);
     res.download(filePath, originalFileName);
   }
 
@@ -85,7 +86,7 @@ export class DatasetsController {
    * API Xóa dataset
    */
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.datasetsService.remove(id);
+  async remove(@Param('id') id: string,@CurrentUser() user:RequestUser) {
+    return this.datasetsService.remove(id,user.userId);
   }
 }

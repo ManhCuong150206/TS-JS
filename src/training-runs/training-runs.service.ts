@@ -29,7 +29,7 @@ export class TrainingRunsService {
       throw new BadRequestException(`experimentId không hợp lệ: ${dto.experimentId}`);
     }
 
-    const experiment = await this.experimentModel.findById(experimentObjectId).exec();
+    const experiment = await this.experimentModel.findOne({_id:experimentObjectId,ownerId:ownerId||'anonymous_user'}).exec();
     if (!experiment) {
       throw new BadRequestException(`Không tìm thấy thí nghiệm với ID: ${dto.experimentId}`);
     }
@@ -59,9 +59,8 @@ export class TrainingRunsService {
         filter.experimentId = new Types.ObjectId(experimentId);
       }
     }
-    if (ownerId && ownerId !== 'anonymous_user') {
-      filter.$or = [{ ownerId }, { ownerId: 'anonymous_user' }];
-    }
+    filter.ownerId=ownerId||'anonymous_user';
+    page=Number.isFinite(page)?Math.max(1,Math.floor(page)):1;limit=Number.isFinite(limit)?Math.min(100,Math.max(1,Math.floor(limit))):20;
 
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
@@ -78,10 +77,11 @@ export class TrainingRunsService {
     };
   }
 
-  async findOne(id: string): Promise<TrainingRun> {
+  async findOne(id: string, ownerId = 'anonymous_user'): Promise<TrainingRun> {
     const run = await this.trainingRunModel.findOne({
+      ownerId,
       $or: [{ _id: Types.ObjectId.isValid(id) ? id : undefined }, { clientId: id }],
-    }).populate('experimentId').exec();
+    }).populate({path:'experimentId',match:{ownerId}}).exec();
 
     if (!run) {
       throw new NotFoundException(`Không tìm thấy phiên huấn luyện với ID: ${id}`);

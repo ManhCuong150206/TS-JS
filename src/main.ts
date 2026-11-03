@@ -1,3 +1,4 @@
+import { json } from 'express';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
@@ -6,10 +7,11 @@ async function bootstrap() {
 
   // Cấu hình tiền tố phiên bản API theo đặc tả (/api/v1)
   app.setGlobalPrefix('api/v1');
+  app.use(json({limit:'10mb'}));
 
   // Cho phép CORS cho frontend kết nối
   app.enableCors({
-    origin: '*',
+    origin: (process.env.CORS_ORIGINS ?? 'http://localhost:4200,http://localhost:4300,http://127.0.0.1:4300').split(','),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

@@ -41,7 +41,7 @@ export class SyncService {
 
     for (const op of batchDto.operations) {
       // 1. Kiểm tra Idempotency
-      const existingOp = await this.syncOpModel.findOne({ idempotencyKey: op.idempotencyKey }).exec();
+      const existingOp = await this.syncOpModel.findOne({ idempotencyKey: op.idempotencyKey, ownerId:resolvedOwner }).exec();
       if (existingOp) {
         results.push({
           operationId: op.operationId,
@@ -120,7 +120,7 @@ export class SyncService {
     op: SyncOperationItemDto,
     ownerId: string,
   ): Promise<SyncOperationResultDto> {
-    const existing = await this.experimentModel.findOne({ clientId: op.entityClientId }).exec();
+    const existing = await this.experimentModel.findOne({ clientId: op.entityClientId, ownerId }).exec();
 
     if (op.action === 'create') {
       if (existing) {
@@ -198,7 +198,7 @@ export class SyncService {
       }
 
       // Cập nhật hợp lệ
-      Object.assign(existing, op.payload);
+      Object.assign(existing, op.payload, {ownerId,clientId:op.entityClientId});
       existing.syncVersion = currentServerVersion + 1;
       await existing.save();
 
@@ -247,7 +247,7 @@ export class SyncService {
     op: SyncOperationItemDto,
     ownerId: string,
   ): Promise<SyncOperationResultDto> {
-    const existing = await this.datasetModel.findOne({ clientId: op.entityClientId }).exec();
+    const existing = await this.datasetModel.findOne({ clientId: op.entityClientId, ownerId }).exec();
 
     if (op.action === 'create') {
       if (existing) {
@@ -262,7 +262,7 @@ export class SyncService {
       }
 
       const created = await this.datasetModel.create({
-        ...op.payload,
+        ...op.payload, storage:undefined,
         clientId: op.entityClientId,
         ownerId,
         syncVersion: 1,
@@ -281,7 +281,7 @@ export class SyncService {
     if (op.action === 'update') {
       if (!existing) {
         const created = await this.datasetModel.create({
-          ...op.payload,
+          ...op.payload, storage:undefined,
           clientId: op.entityClientId,
           ownerId,
           syncVersion: 1,
@@ -313,7 +313,7 @@ export class SyncService {
         };
       }
 
-      Object.assign(existing, op.payload);
+      const {storage:ignoredStorage,...safePayload}=op.payload;void ignoredStorage;Object.assign(existing,safePayload,{ownerId,clientId:op.entityClientId});
       existing.syncVersion = serverVersion + 1;
       await existing.save();
 
@@ -352,7 +352,7 @@ export class SyncService {
     op: SyncOperationItemDto,
     ownerId: string,
   ): Promise<SyncOperationResultDto> {
-    const existing = await this.trainingRunModel.findOne({ clientId: op.entityClientId }).exec();
+    const existing = await this.trainingRunModel.findOne({ clientId: op.entityClientId, ownerId }).exec();
 
     if (op.action === 'create') {
       if (existing) {
@@ -384,7 +384,7 @@ export class SyncService {
     }
 
     if (op.action === 'update' && existing) {
-      Object.assign(existing, op.payload);
+      Object.assign(existing, op.payload, {ownerId,clientId:op.entityClientId});
       existing.syncVersion = (existing.syncVersion || 1) + 1;
       await existing.save();
 
@@ -412,13 +412,12 @@ export class SyncService {
    */
   async getChanges(sinceStr?: string, ownerId?: string) {
     const sinceDate = sinceStr ? new Date(sinceStr) : new Date(0);
+    if(Number.isNaN(sinceDate.getTime()))throw new BadRequestException('Thời điểm since không hợp lệ.');
     const filter: Record<string, unknown> = {
       updatedAt: { $gte: sinceDate },
     };
 
-    if (ownerId && ownerId !== 'anonymous_user') {
-      filter.$or = [{ ownerId }, { ownerId: 'anonymous_user' }];
-    }
+    filter.ownerId=ownerId||'anonymous_user';
 
     const [experiments, datasets, trainingRuns] = await Promise.all([
       this.experimentModel.find(filter).exec(),

@@ -1,43 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext, createParamDecorator } from '@nestjs/common';
-import type { Request } from 'express';
-
-export class RequestUser {
-  userId: string;
-  isAnonymous: boolean;
-}
-
-/**
- * Optional Auth Guard:
- * Accepts user ID from 'x-user-id' header, 'Authorization: Bearer <userId>',
- * or assigns a default anonymous user if none is supplied.
- */
+import { Injectable, CanActivate, ExecutionContext, createParamDecorator, UnauthorizedException } from '@nestjs/common';
+import type { SessionRequest } from '../auth/auth.service.js';
+export class RequestUser {userId:string;isAnonymous:boolean;}
+/** Historical name retained for imports. Identity is now resolved by server-side sessions. */
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request & { user?: RequestUser }>();
-    const headerUserId = request.headers['x-user-id'] as string;
-    const authHeader = request.headers['authorization'];
-
-    let userId = '';
-    if (headerUserId && headerUserId.trim().length > 0) {
-      userId = headerUserId.trim();
-    } else if (authHeader && authHeader.startsWith('Bearer ')) {
-      userId = authHeader.substring(7).trim();
-    }
-
-    if (userId) {
-      request.user = { userId, isAnonymous: false };
-    } else {
-      request.user = { userId: 'anonymous_user', isAnonymous: true };
-    }
-
-    return true;
-  }
+ canActivate(context:ExecutionContext){const req=context.switchToHttp().getRequest<SessionRequest>();if(!req.user)throw new UnauthorizedException('Vui lòng đăng nhập hoặc chọn Guest.');const expected=req.headers['x-expected-user'];if(expected&&expected!==req.user.userId)throw new UnauthorizedException('Phiên đăng nhập đã đổi tài khoản.');return true;}
 }
-
-export const CurrentUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): RequestUser => {
-    const request = ctx.switchToHttp().getRequest<Request & { user?: RequestUser }>();
-    return request.user || { userId: 'anonymous_user', isAnonymous: true };
-  },
-);
+export const CurrentUser=createParamDecorator((_data:unknown,ctx:ExecutionContext):RequestUser=>{
+ const user=ctx.switchToHttp().getRequest<SessionRequest>().user;if(!user)throw new UnauthorizedException();return user;
+});

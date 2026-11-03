@@ -78,7 +78,7 @@ describe('ExperimentsController', () => {
       const mockResult = { items: [mockExperiment], total: 1, page: 1, limit: 20, totalPages: 1 };
       mockService.findAll.mockResolvedValue(mockResult);
       const result = await controller.findAll();
-      expect(mockService.findAll).toHaveBeenCalledWith('anonymous_user', 1, 20);
+      expect(mockService.findAll).toHaveBeenCalledWith('anonymous_user', 1, 20, false);
       expect(result).toEqual(mockResult);
     });
   });
@@ -87,7 +87,7 @@ describe('ExperimentsController', () => {
     it('should return single experiment if found', async () => {
       mockService.findOne.mockResolvedValue(mockExperiment);
       const result = await controller.findOne('exp-1');
-      expect(mockService.findOne).toHaveBeenCalledWith('exp-1');
+      expect(mockService.findOne).toHaveBeenCalledWith('exp-1', undefined);
       expect(result).toEqual(mockExperiment);
     });
 
@@ -105,7 +105,7 @@ describe('ExperimentsController', () => {
     it('should delete experiment if found', async () => {
       mockService.remove.mockResolvedValue({ success: true, message: 'Đã xóa' });
       const result = await controller.remove('exp-1');
-      expect(mockService.remove).toHaveBeenCalledWith('exp-1');
+      expect(mockService.remove).toHaveBeenCalledWith('exp-1', undefined);
       expect(result).toEqual({ success: true, message: 'Đã xóa' });
     });
 

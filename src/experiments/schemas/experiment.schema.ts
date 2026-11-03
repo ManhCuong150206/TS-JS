@@ -13,7 +13,7 @@ export class AlgorithmInfo {
   @Prop({ default: '1.0.0' })
   version: string;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: true })
+  @Prop({ type: MongooseSchema.Types.Mixed, required: true, default: () => ({}) })
   config: Record<string, unknown>;
 }
 
@@ -55,6 +55,26 @@ export const SyntheticConfigSchema = SchemaFactory.createForClass(SyntheticConfi
 
 @Schema({ timestamps: true, collection: 'experiments' })
 export class Experiment {
+  @Prop({type:Number}) clientCreatedAt?:number;
+  @Prop({type:Number}) learningRate?:number;
+  @Prop({type:Number}) maxIterations?:number;
+  @Prop({type:Number}) degree?:number;
+  @Prop({type:Number}) lambda?:number;
+  @Prop({enum:['synthetic','csv']}) dataSource?:string;
+  @Prop({type:String,default:null}) csvName?:string|null;
+  @Prop({type:Number}) sampleCount?:number;
+  @Prop({type:Number}) featureCount?:number;
+  @Prop({type:Number}) noise?:number;
+  @Prop({type:Number}) seed?:number;
+  @Prop({type:Number}) trainRatio?:number;
+  @Prop({type:Number}) iterations?:number;
+  @Prop({type:[Number],default:undefined}) w?:number[];
+  @Prop({type:Number}) b?:number;
+  @Prop({type:{mse:Number,rmse:Number,mae:Number,r2:{type:Number,default:null}},_id:false}) train?:{mse:number;rmse:number;mae:number;r2:number|null};
+  @Prop({type:{mse:Number,rmse:Number,mae:Number,r2:{type:Number,default:null}},_id:false}) test?:{mse:number;rmse:number;mae:number;r2:number|null};
+  @Prop({type:MongooseSchema.Types.Mixed}) csvData?:Record<string,unknown>;
+  @Prop({type:String}) lastMutationId?:string;
+
   @Prop({ type: SyntheticConfigSchema, required: false })
   synthetic?: SyntheticConfig;
 

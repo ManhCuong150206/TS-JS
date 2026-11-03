@@ -1,3 +1,4 @@
+import { AuthModule } from './auth/auth.module.js';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -17,8 +18,10 @@ import { SyncModule } from './sync/sync.module.js';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('MONGODB_URI') || config.get<string>('connection_string'),
+        dbName: config.get<string>('MONGODB_DB_NAME'),
       }),
     }),
+    AuthModule,
     DatasetsModule,
     ExperimentsModule,
     TrainingRunsModule,
