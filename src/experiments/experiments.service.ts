@@ -213,6 +213,7 @@ export class ExperimentsService {
   ): Promise<{ success: boolean; message: string }> {
     const experiment = await this.findOne(id, user);
     experiment.deletedAt = new Date();
+    experiment.syncVersion = (experiment.syncVersion || 1) + 1;
     await (experiment as ExperimentDocument).save();
     return { success: true, message: 'Đã xóa thí nghiệm thành công.' };
   }

@@ -1,3 +1,4 @@
+import { AuthModule } from './auth/auth.module.js';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module.js';
         uri: mongoUri(config),
       }),
     }),
+    AuthModule,
     DatasetsModule,
     ExperimentsModule,
     TrainingRunsModule,

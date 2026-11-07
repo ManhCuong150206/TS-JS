@@ -5,7 +5,7 @@ import { CreateTrainingRunDto } from './dto/create-training-run.dto.js';
 
 @Controller('training-runs')
 export class TrainingRunsController {
-  constructor(private readonly trainingRunsService: TrainingRunsService) {}
+  constructor(private readonly trainingRunsService: TrainingRunsService) { }
 
   @Post()
   async create(

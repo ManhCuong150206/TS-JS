@@ -205,7 +205,9 @@ export class DatasetsService {
       );
     }
 
-    const filePath = path.join(this.storageDir, dataset.storage.key);
+    if(!/^[a-f0-9-]{36}\.csv$/i.test(dataset.storage.key))throw new NotFoundException('Khóa tệp không hợp lệ.');
+    const filePath = path.resolve(this.storageDir, dataset.storage.key);
+    if(!filePath.startsWith(this.storageDir+path.sep))throw new NotFoundException('Đường dẫn không hợp lệ.');
     try {
       await fs.access(filePath);
     } catch {

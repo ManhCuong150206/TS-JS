@@ -246,11 +246,7 @@ Xung đột xảy ra khi hai người cùng sửa **cùng một chỗ** của m�
 2. Mở file đó trong VS Code, tìm các đoạn có dạng:
 
 ```
-<<<<<<< HEAD
 code của m
-=======
-code của người khác
->>>>>>> origin/main
 ```
 
 3. Quyết định giữ phần nào (hoặc gộp cả hai), rồi **xóa hẳn ba dòng đánh dấu** `<<<<<<<`, `=======`, `>>>>>>>`. VS Code có các nút **Accept Current / Accept Incoming / Accept Both** ngay trên đoạn xung đột.
@@ -339,3 +335,21 @@ nest g controller ten-module
 - Thay đổi cấu trúc dữ liệu (schema) hoặc API phải **báo cả nhóm** trước khi gộp, vì Frontend và Tester phụ thuộc vào đó.
 - Một việc xong khi: code chạy được, có hướng dẫn thử, và đã được một người review.
 - Gặp lỗi thì copy **nguyên văn** thông báo lỗi gửi vào nhóm, kèm lệnh đã chạy. Nhớ **che mật khẩu** nếu có.
+<<<<<<< HEAD
+=======
+
+## Lưu thí nghiệm, xác thực và kiểm thử tích hợp (03/11/2026)
+
+- FE gọi cùng origin `/api/v1`; Angular dev proxy chuyển tới NestJS `127.0.0.1:3000`. Chạy Backend trước bằng `npm run start:dev`, rồi FE bằng `npm start`. Bản FE SSR chuyển API tới `BACKEND_ORIGIN` (mặc định cùng địa chỉ Backend); không trả HTML thay cho phản hồi API.
+- Đăng ký/đăng nhập/Guest dùng `/api/v1/auth/register`, `/login`, `/guest`, `/session`, `/logout`. Mật khẩu dùng scrypt với salt riêng, session token ngẫu nhiên chỉ lưu bản hash phía server. Trình duyệt nhận cookie HttpOnly/SameSite=Lax; token không nằm trong localStorage. Không còn chấp nhận `x-user-id` hoặc Bearer chứa ID tự khai. Header `X-Expected-User` chỉ dùng đối chiếu với phiên đã xác thực, không cấp quyền.
+- Mọi dataset, experiment, training run và sync chỉ truy cập dữ liệu của chủ phiên. Guest có ID riêng, không dùng chung anonymous_user. Bản ghi cũ chưa có chủ sở hữu hợp lệ không được tự mở cho mọi người; cần migration có kiểm soát nếu muốn nhập lại dữ liệu cũ.
+- Bulk experiment lưu đủ trọng số, bias, iteration, tham số, metric, loại dữ liệu và CSV đã xử lý. Mỗi bản ghi có mutationId và serverVersion; phản hồi items xác nhận từng mutation. Xóa offline dùng tombstone; đọc danh sách `includeDeleted=true` để kéo cả các lần xóa. Xung đột trả 409, không tự ghi đè.
+- Giới hạn bản lưu 8 MiB, JSON request 10 MiB, mỗi lô tối đa 100 bản ghi. FE tự chia lô theo dung lượng. Snapshot CSV quá lớn bị báo lỗi trước khi lưu; API upload file hiện có giới hạn 10 MiB, không thay thế tự động giới hạn snapshot. File chỉ được gắn qua upload của server; metadata/sync không được tự gán storage key để tải tệp khác.
+- Production phải dùng HTTPS cổng 443 và `NODE_ENV=production` để cookie có cờ Secure; cấu hình `CORS_ORIGINS` đúng origin triển khai. Đợt này chưa xác minh chứng chỉ hoặc triển khai TLS thật. Chưa có xác minh email/quên mật khẩu/2FA.
+
+Kiểm tra: `npm test` chạy unit; `npm run test:e2e` chạy API thật với MongoDB đang hoạt động, tự tạo database `regression_test_<random>` và chỉ dọn đúng database đó. Không dùng database ứng dụng cho test. `node test/run-browser-backend.mjs` mở API test riêng trên cổng 3000 với database `regression_browser_<random>` để chạy browser FE; dừng tiến trình này rồi chạy `node test/cleanup-browser-backend.mjs` để dọn đúng database test đã ghi trong output. Không chạy helper nếu cổng 3000 đang phục vụ Backend thật.
+
+Chi tiết FE và giới hạn: `FE/FE-hoiquy3d/docs/CONG-NGHE-VA-HIEU-UNG.md` trong repo FE riêng.
+
+Bảng thay đổi từng file và hướng dẫn cho người mới: [Báo cáo cập nhật 03/11/2026](BAO-CAO-CAP-NHAT-2026-11-03.md).
+>>>>>>> 531624601ad681b27923cf4695a38db47d8a6e88

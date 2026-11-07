@@ -44,7 +44,7 @@ export class SyncService {
     private readonly datasetModel: Model<DatasetDocument>,
     @InjectModel(TrainingRun.name)
     private readonly trainingRunModel: Model<TrainingRunDocument>,
-  ) {}
+  ) { }
 
   /**
    * Xử lý Batch Sync từ client offline:
