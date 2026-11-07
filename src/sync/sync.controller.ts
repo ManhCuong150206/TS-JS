@@ -1,17 +1,9 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { SyncService } from './sync.service.js';
-import { OptionalAuthGuard, CurrentUser, RequestUser } from '../common/auth.guard.js';
+import { CurrentUser, RequestUser } from '../common/auth.guard.js';
 import { SyncBatchRequestDto } from './dto/sync.dto.js';
 
 @Controller('sync')
-@UseGuards(OptionalAuthGuard)
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
 
@@ -23,7 +15,7 @@ export class SyncController {
     @Body() batchDto: SyncBatchRequestDto,
     @CurrentUser() user: RequestUser,
   ) {
-    return this.syncService.processBatch(batchDto, user.userId);
+    return this.syncService.processBatch(batchDto, user);
   }
 
   /**
@@ -34,6 +26,6 @@ export class SyncController {
     @Query('since') since: string,
     @CurrentUser() user: RequestUser,
   ) {
-    return this.syncService.getChanges(since, user.userId);
+    return this.syncService.getChanges(since, user);
   }
 }

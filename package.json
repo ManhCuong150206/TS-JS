@@ -23,7 +23,8 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts"
+    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "migrate-anonymous": "node --env-file-if-exists=.env scripts/migrate-anonymous.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -31,6 +32,13 @@
     "@nestjs/core": "^12.0.1",
     "@nestjs/mongoose": "^12.0.0",
     "@nestjs/platform-express": "^12.0.1",
+    "@nestjs/throttler": "^6.7.1",
+    "argon2": "^0.45.2",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "connect-mongo": "^6.0.0",
+    "express-session": "^1.19.0",
     "mongoose": "^9.11.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
@@ -40,11 +48,14 @@
     "@nestjs/mau": "^0.2.6",
     "@nestjs/schematics": "^12.0.0",
     "@nestjs/testing": "^12.0.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
+    "@types/express-session": "^1.19.0",
     "@types/multer": "^2.3.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",
+    "mongodb-memory-server": "^11.3.0",
     "oxlint": "^1.58.0",
     "oxlint-tsgolint": "^7.0.2001",
     "prettier": "^3.4.2",

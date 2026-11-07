@@ -2,12 +2,18 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 
 export type ExperimentDocument = HydratedDocument<Experiment>;
-export type AlgorithmType = 'linear' | 'polynomial' | 'ridge' | 'lasso' | 'neural-network';
-export type ExperimentStatus = 'draft' | 'ready' | 'running' | 'completed' | 'error';
+export type AlgorithmType =
+  'linear' | 'polynomial' | 'ridge' | 'lasso' | 'neural-network';
+export type ExperimentStatus =
+  'draft' | 'ready' | 'running' | 'completed' | 'error';
 
-@Schema({ _id: false })
+@Schema({ _id: false, minimize: false })
 export class AlgorithmInfo {
-  @Prop({ type: String, required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'],
+  })
   type: AlgorithmType;
 
   @Prop({ default: '1.0.0' })
@@ -21,14 +27,19 @@ export const AlgorithmInfoSchema = SchemaFactory.createForClass(AlgorithmInfo);
 
 @Schema({ _id: false })
 export class PreprocessingConfig {
-  @Prop({ type: String, enum: ['reject', 'drop-rows', 'mean-imputation'], default: 'reject' })
+  @Prop({
+    type: String,
+    enum: ['reject', 'drop-rows', 'mean-imputation'],
+    default: 'reject',
+  })
   missingValues: string;
 
   @Prop({ default: false })
   standardizeFeatures: boolean;
 }
 
-export const PreprocessingConfigSchema = SchemaFactory.createForClass(PreprocessingConfig);
+export const PreprocessingConfigSchema =
+  SchemaFactory.createForClass(PreprocessingConfig);
 
 @Schema({ _id: false })
 export class SplitConfig {
@@ -41,7 +52,7 @@ export class SplitConfig {
 
 export const SplitConfigSchema = SchemaFactory.createForClass(SplitConfig);
 
-@Schema({ timestamps: true, collection: 'experiments' })
+@Schema({ timestamps: true, collection: 'experiments', minimize: false })
 export class Experiment {
   @Prop({ required: true, trim: true, unique: true, index: true })
   clientId: string;
@@ -52,10 +63,20 @@ export class Experiment {
   @Prop({ trim: true, maxlength: 1000, default: '' })
   description?: string;
 
-  @Prop({ type: String, enum: ['draft', 'ready', 'running', 'completed', 'error'], default: 'draft', index: true })
+  @Prop({
+    type: String,
+    enum: ['draft', 'ready', 'running', 'completed', 'error'],
+    default: 'draft',
+    index: true,
+  })
   status: ExperimentStatus;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Dataset', required: false, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Dataset',
+    required: false,
+    index: true,
+  })
   datasetId?: MongooseSchema.Types.ObjectId;
 
   @Prop({ type: AlgorithmInfoSchema, required: true })

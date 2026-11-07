@@ -1,3 +1,4 @@
+import { RequestUser } from '../common/auth.guard.js';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExperimentsController } from './experiments.controller.js';
@@ -21,6 +22,8 @@ describe('ExperimentsController', () => {
     targetColumn: 'y',
     featureColumns: ['x1', 'x2'],
   };
+
+  const user = { userId: 'test-user', role: 'user' } as RequestUser;
 
   const mockService = {
     create: vi.fn(),
@@ -55,8 +58,8 @@ describe('ExperimentsController', () => {
   describe('create', () => {
     it('should call service.create with dto and userId', async () => {
       mockService.create.mockResolvedValue(mockExperiment);
-      const result = await controller.create(mockExperiment);
-      expect(mockService.create).toHaveBeenCalledWith(mockExperiment, 'anonymous_user');
+      const result = await controller.create(mockExperiment, user);
+      expect(mockService.create).toHaveBeenCalledWith(mockExperiment, user);
       expect(result).toEqual(mockExperiment);
     });
   });
@@ -64,10 +67,13 @@ describe('ExperimentsController', () => {
   describe('bulkUpsert', () => {
     it('should call service.bulkUpsert and return result', async () => {
       mockService.bulkUpsert.mockResolvedValue({ success: true, count: 1 });
-      const result = await controller.bulkUpsert([mockExperiment as unknown as Record<string, unknown>]);
+      const result = await controller.bulkUpsert(
+        [mockExperiment as unknown as Record<string, unknown>],
+        user,
+      );
       expect(mockService.bulkUpsert).toHaveBeenCalledWith(
         [mockExperiment],
-        'anonymous_user',
+        user,
       );
       expect(result).toEqual({ success: true, count: 1 });
     });
@@ -75,10 +81,16 @@ describe('ExperimentsController', () => {
 
   describe('findAll', () => {
     it('should return paginated list of experiments', async () => {
-      const mockResult = { items: [mockExperiment], total: 1, page: 1, limit: 20, totalPages: 1 };
+      const mockResult = {
+        items: [mockExperiment],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      };
       mockService.findAll.mockResolvedValue(mockResult);
-      const result = await controller.findAll();
-      expect(mockService.findAll).toHaveBeenCalledWith('anonymous_user', 1, 20);
+      const result = await controller.findAll(user);
+      expect(mockService.findAll).toHaveBeenCalledWith(user, 1, 20);
       expect(result).toEqual(mockResult);
     });
   });
@@ -86,8 +98,8 @@ describe('ExperimentsController', () => {
   describe('findOne', () => {
     it('should return single experiment if found', async () => {
       mockService.findOne.mockResolvedValue(mockExperiment);
-      const result = await controller.findOne('exp-1');
-      expect(mockService.findOne).toHaveBeenCalledWith('exp-1');
+      const result = await controller.findOne('exp-1', user);
+      expect(mockService.findOne).toHaveBeenCalledWith('exp-1', user);
       expect(result).toEqual(mockExperiment);
     });
 
@@ -95,7 +107,7 @@ describe('ExperimentsController', () => {
       mockService.findOne.mockRejectedValue(
         new NotFoundException('Không tìm thấy thí nghiệm'),
       );
-      await expect(controller.findOne('non-existent')).rejects.toThrow(
+      await expect(controller.findOne('non-existent', user)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -103,9 +115,12 @@ describe('ExperimentsController', () => {
 
   describe('remove', () => {
     it('should delete experiment if found', async () => {
-      mockService.remove.mockResolvedValue({ success: true, message: 'Đã xóa' });
-      const result = await controller.remove('exp-1');
-      expect(mockService.remove).toHaveBeenCalledWith('exp-1');
+      mockService.remove.mockResolvedValue({
+        success: true,
+        message: 'Đã xóa',
+      });
+      const result = await controller.remove('exp-1', user);
+      expect(mockService.remove).toHaveBeenCalledWith('exp-1', user);
       expect(result).toEqual({ success: true, message: 'Đã xóa' });
     });
 
@@ -113,7 +128,7 @@ describe('ExperimentsController', () => {
       mockService.remove.mockRejectedValue(
         new NotFoundException('Không tìm thấy thí nghiệm'),
       );
-      await expect(controller.remove('non-existent')).rejects.toThrow(
+      await expect(controller.remove('non-existent', user)).rejects.toThrow(
         NotFoundException,
       );
     });

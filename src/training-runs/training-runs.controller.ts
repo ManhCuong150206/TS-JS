@@ -1,18 +1,9 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Query } from '@nestjs/common';
 import { TrainingRunsService } from './training-runs.service.js';
-import { OptionalAuthGuard, CurrentUser, RequestUser } from '../common/auth.guard.js';
+import { CurrentUser, RequestUser } from '../common/auth.guard.js';
 import { CreateTrainingRunDto } from './dto/create-training-run.dto.js';
 
 @Controller('training-runs')
-@UseGuards(OptionalAuthGuard)
 export class TrainingRunsController {
   constructor(private readonly trainingRunsService: TrainingRunsService) {}
 
@@ -21,7 +12,7 @@ export class TrainingRunsController {
     @Body() dto: CreateTrainingRunDto,
     @CurrentUser() user: RequestUser,
   ) {
-    return this.trainingRunsService.create(dto, user.userId);
+    return this.trainingRunsService.create(dto, user);
   }
 
   @Get()
@@ -33,11 +24,16 @@ export class TrainingRunsController {
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
-    return this.trainingRunsService.findAll(experimentId, user.userId, pageNum, limitNum);
+    return this.trainingRunsService.findAll(
+      experimentId,
+      user,
+      pageNum,
+      limitNum,
+    );
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.trainingRunsService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    return this.trainingRunsService.findOne(id, user);
   }
 }

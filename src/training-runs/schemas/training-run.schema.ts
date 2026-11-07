@@ -2,8 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 
 export type TrainingRunDocument = HydratedDocument<TrainingRun>;
-export type TrainingRunStatus = 'queued' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
-export type TrainingAlgorithmType = 'linear' | 'polynomial' | 'ridge' | 'lasso' | 'neural-network';
+export type TrainingRunStatus =
+  'queued' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
+export type TrainingAlgorithmType =
+  'linear' | 'polynomial' | 'ridge' | 'lasso' | 'neural-network';
 
 @Schema({ _id: false })
 export class MetricsInfo {
@@ -39,12 +41,17 @@ export class HistoryPoint {
 
 export const HistoryPointSchema = SchemaFactory.createForClass(HistoryPoint);
 
-@Schema({ timestamps: true, collection: 'trainingRuns' })
+@Schema({ timestamps: true, collection: 'trainingRuns', minimize: false })
 export class TrainingRun {
   @Prop({ required: true, trim: true, unique: true, index: true })
   clientId: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Experiment', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Experiment',
+    required: true,
+    index: true,
+  })
   experimentId: MongooseSchema.Types.ObjectId;
 
   @Prop({
@@ -55,7 +62,11 @@ export class TrainingRun {
   })
   status: TrainingRunStatus;
 
-  @Prop({ type: String, required: true, enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'] })
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['linear', 'polynomial', 'ridge', 'lasso', 'neural-network'],
+  })
   algorithmType: TrainingAlgorithmType;
 
   @Prop({ required: true })
@@ -93,6 +104,9 @@ export class TrainingRun {
 
   @Prop({ type: Number, default: 1 })
   syncVersion: number;
+
+  @Prop({ type: Date })
+  deletedAt?: Date;
 }
 
 export const TrainingRunSchema = SchemaFactory.createForClass(TrainingRun);

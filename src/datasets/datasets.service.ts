@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { RequestUser } from '../common/auth.guard.js';
+import { ownerFilter, idFilter, dataFields } from '../common/ownership.js';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
@@ -23,10 +29,16 @@ export class DatasetsService {
   private readonly maxFileSize: number;
 
   constructor(
-    @InjectModel(Dataset.name) private readonly datasetModel: Model<DatasetDocument>,
+    @InjectModel(Dataset.name)
+    private readonly datasetModel: Model<DatasetDocument>,
   ) {
-    this.storageDir = path.resolve(process.env.DATASET_STORAGE_DIR || './data/uploads');
-    this.maxFileSize = parseInt(process.env.MAX_DATASET_FILE_SIZE || '10485760', 10); // 10MB
+    this.storageDir = path.resolve(
+      process.env.DATASET_STORAGE_DIR || './data/uploads',
+    );
+    this.maxFileSize = parseInt(
+      process.env.MAX_DATASET_FILE_SIZE || '10485760',
+      10,
+    ); // 10MB
     void this.ensureStorageDirectory();
   }
 
@@ -43,8 +55,8 @@ export class DatasetsService {
    */
   async uploadCsv(
     file: UploadedMulterFile | undefined,
-    name?: string,
-    ownerId?: string,
+    name: string | undefined,
+    user: RequestUser,
   ): Promise<Dataset> {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn tệp CSV để tải lên.');
@@ -53,14 +65,23 @@ export class DatasetsService {
     // 1. Kiểm tra dung lượng tệp
     if (file.size > this.maxFileSize) {
       const maxMb = (this.maxFileSize / (1024 * 1024)).toFixed(1);
-      throw new BadRequestException(`Dung lượng tệp vượt quá giới hạn tối đa cho phép (${maxMb} MB).`);
+      throw new BadRequestException(
+        `Dung lượng tệp vượt quá giới hạn tối đa cho phép (${maxMb} MB).`,
+      );
     }
 
     // 2. Kiểm tra định dạng hỗ trợ
     const ext = path.extname(file.originalname).toLowerCase();
-    const validMimes = ['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/csv'];
+    const validMimes = [
+      'text/csv',
+      'text/plain',
+      'application/vnd.ms-excel',
+      'application/csv',
+    ];
     if (ext !== '.csv' && !validMimes.includes(file.mimetype)) {
-      throw new BadRequestException('Định dạng tệp không được hỗ trợ. Hệ thống chỉ chấp nhận tệp có định dạng .csv.');
+      throw new BadRequestException(
+        'Định dạng tệp không được hỗ trợ. Hệ thống chỉ chấp nhận tệp có định dạng .csv.',
+      );
     }
 
     // 3. Phân tích và kiểm tra tính hợp lệ của CSV
@@ -79,7 +100,10 @@ export class DatasetsService {
     await fs.writeFile(destinationPath, file.buffer);
 
     // 5. Lưu thông tin metadata vào MongoDB
-    const datasetName = (name && name.trim().length > 0) ? name.trim() : file.originalname.replace(/\.[^/.]+$/, '');
+    const datasetName =
+      name && name.trim().length > 0
+        ? name.trim()
+        : file.originalname.replace(/\.[^/.]+$/, '');
     const clientId = randomUUID();
 
     const createdDataset = new this.datasetModel({
@@ -100,7 +124,7 @@ export class DatasetsService {
         filePath: destinationPath,
       },
       status: 'ready',
-      ownerId: ownerId || 'anonymous_user',
+      ownerId: user.userId,
       syncVersion: 1,
     });
 
@@ -110,19 +134,15 @@ export class DatasetsService {
   /**
    * Tạo dataset từ metadata (dành cho dữ liệu sinh tự động hoặc mẫu có sẵn)
    */
-  async create(dto: CreateDatasetDto, ownerId?: string): Promise<Dataset> {
+  async create(dto: CreateDatasetDto, user: RequestUser): Promise<Dataset> {
     const clientId = dto.clientId || randomUUID();
     const createdDataset = new this.datasetModel(
-      Object.assign(
-        {},
-        dto,
-        {
-          clientId,
-          ownerId: ownerId || dto.ownerId || 'anonymous_user',
-          status: 'ready',
-          syncVersion: 1,
-        },
-      ),
+      Object.assign({}, dataFields(dto, 'dataset'), {
+        clientId,
+        ownerId: user.userId,
+        status: 'ready',
+        syncVersion: 1,
+      }),
     );
     return createdDataset.save();
   }
@@ -130,15 +150,17 @@ export class DatasetsService {
   /**
    * Danh sách dataset có lọc theo ownerId và phân trang
    */
-  async findAll(ownerId?: string, page = 1, limit = 20) {
-    const filter: Record<string, unknown> = { deletedAt: { $exists: false } };
-    if (ownerId && ownerId !== 'anonymous_user') {
-      filter.$or = [{ ownerId }, { ownerId: 'anonymous_user' }];
-    }
+  async findAll(user: RequestUser, page = 1, limit = 20) {
+    const filter = { deletedAt: { $exists: false }, ...ownerFilter(user) };
 
     const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
-      this.datasetModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.datasetModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.datasetModel.countDocuments(filter).exec(),
     ]);
 
@@ -154,11 +176,14 @@ export class DatasetsService {
   /**
    * Lấy chi tiết dataset theo MongoDB _id hoặc clientId
    */
-  async findOne(id: string): Promise<Dataset> {
-    const dataset = await this.datasetModel.findOne({
-      $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : undefined }, { clientId: id }],
-      deletedAt: { $exists: false },
-    }).exec();
+  async findOne(id: string, user: RequestUser): Promise<Dataset> {
+    const dataset = await this.datasetModel
+      .findOne({
+        ...idFilter(id),
+        ...ownerFilter(user),
+        deletedAt: { $exists: false },
+      })
+      .exec();
 
     if (!dataset) {
       throw new NotFoundException(`Không tìm thấy dataset với ID: ${id}`);
@@ -169,17 +194,24 @@ export class DatasetsService {
   /**
    * Lấy đường dẫn tệp để tải về hoặc đọc nội dung
    */
-  async getFilePath(id: string): Promise<{ filePath: string; originalFileName: string }> {
-    const dataset = await this.findOne(id);
+  async getFilePath(
+    id: string,
+    user: RequestUser,
+  ): Promise<{ filePath: string; originalFileName: string }> {
+    const dataset = await this.findOne(id, user);
     if (!dataset.storage?.key) {
-      throw new NotFoundException('Dataset này không lưu trữ tệp trên máy chủ.');
+      throw new NotFoundException(
+        'Dataset này không lưu trữ tệp trên máy chủ.',
+      );
     }
 
     const filePath = path.join(this.storageDir, dataset.storage.key);
     try {
       await fs.access(filePath);
     } catch {
-      throw new NotFoundException('Tệp dữ liệu không còn tồn tại trên máy chủ.');
+      throw new NotFoundException(
+        'Tệp dữ liệu không còn tồn tại trên máy chủ.',
+      );
     }
 
     return {
@@ -191,8 +223,11 @@ export class DatasetsService {
   /**
    * Xóa mềm dataset
    */
-  async remove(id: string): Promise<{ success: boolean; message: string }> {
-    const dataset = await this.findOne(id);
+  async remove(
+    id: string,
+    user: RequestUser,
+  ): Promise<{ success: boolean; message: string }> {
+    const dataset = await this.findOne(id, user);
     dataset.deletedAt = new Date();
     await (dataset as DatasetDocument).save();
     return { success: true, message: 'Đã xóa dataset thành công.' };
