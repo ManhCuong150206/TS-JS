@@ -52,6 +52,26 @@ export class SplitConfig {
 
 export const SplitConfigSchema = SchemaFactory.createForClass(SplitConfig);
 
+// Phải khai báo trước Experiment: decorator @Prop của Experiment
+// cần SyntheticConfigSchema ngay khi class được định nghĩa.
+// Danh sách kind phải khớp với SYNTHETIC_KINDS trong synthetic-config.validation.ts
+@Schema({ _id: false })
+export class SyntheticConfig {
+  @Prop({ type: String, required: true, enum: ['curved'] })
+  kind: string;
+
+  @Prop({ type: Number, default: 1, enum: [1] })
+  version: number;
+
+  @Prop({ type: Number, required: true }) sampleCount: number;
+  @Prop({ type: Number, required: true }) featureCount: number;
+  @Prop({ type: Number, required: true }) noise: number;
+  @Prop({ type: Number, required: true }) seed: number;
+  @Prop({ type: Number, required: true }) trainRatio: number;
+}
+
+export const SyntheticConfigSchema = SchemaFactory.createForClass(SyntheticConfig);
+
 @Schema({ timestamps: true, collection: 'experiments', minimize: false })
 export class Experiment {
   @Prop({ type: Number }) clientCreatedAt?: number;
@@ -77,7 +97,8 @@ export class Experiment {
   @Prop({ type: SyntheticConfigSchema, required: false })
   synthetic?: SyntheticConfig;
 
-  @Prop({ required: true, trim: true, unique: true, index: true })
+  // Đã bỏ index: true vì unique: true đã tạo index.
+  @Prop({ required: true, trim: true, unique: true })
   clientId: string;
 
   @Prop({ required: true, trim: true, maxlength: 120 })

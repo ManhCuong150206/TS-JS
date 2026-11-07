@@ -11,7 +11,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, UpdateQuery } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import {
   Experiment,
@@ -26,6 +26,7 @@ import {
   Dataset,
   DatasetDocument,
 } from '../datasets/schemas/dataset.schema.js';
+import { validateSyntheticConfig } from './synthetic-config.validation.js';
 
 @Injectable()
 export class ExperimentsService {
@@ -34,7 +35,7 @@ export class ExperimentsService {
     private readonly experimentModel: Model<ExperimentDocument>,
     @InjectModel(Dataset.name)
     private readonly datasetModel: Model<DatasetDocument>,
-  ) {}
+  ) { }
 
   /**
    * Validate algorithm config matching algorithm type
@@ -108,18 +109,19 @@ export class ExperimentsService {
     dto: CreateExperimentDto,
     user: RequestUser,
   ): Promise<Experiment> {
-    const dataset = await this.datasetModel.findOne({
-      ...idFilter(dto.datasetId),
-      ...ownerFilter(user),
-      deletedAt: { $exists: false },
-    });
+    const dataset = await this.datasetModel
+      .findOne({
+        ...idFilter(dto.datasetId),
+        ...ownerFilter(user),
+        deletedAt: { $exists: false },
+      })
+      .exec();
     if (!dataset) throw new NotFoundException('Không tìm thấy dataset');
     const datasetObjectId = dataset._id;
 
-    // 2. Validate algorithm
     this.validateAlgorithm(dto.algorithm.type, dto.algorithm.config);
+    validateSyntheticConfig(dto.synthetic);
 
-    // 3. Validate feature columns & target column
     if (!dto.targetColumn || !dto.targetColumn.trim()) {
       throw new BadRequestException('targetColumn không được để trống.');
     }
@@ -198,6 +200,9 @@ export class ExperimentsService {
     if (dto.algorithm?.type && dto.algorithm?.config) {
       this.validateAlgorithm(dto.algorithm.type, dto.algorithm.config);
     }
+    if (dto.synthetic !== undefined) {
+      validateSyntheticConfig(dto.synthetic);
+    }
 
     const fields = dataFields(dto, 'experiment');
     delete fields.datasetId; // API PATCH cũ không hỗ trợ thay dataset.
@@ -221,23 +226,39 @@ export class ExperimentsService {
   async bulkUpsert(
     experiments: Record<string, unknown>[],
     user: RequestUser,
-  ): Promise<{ success: boolean; count: number }> {
+  ): Promise<{
+    success: boolean;
+    count: number;
+    items: { id: string; syncVersion: number }[];
+  }> {
     if (!Array.isArray(experiments) || experiments.length === 0) {
-      return { success: true, count: 0 };
+      return { success: true, count: 0, items: [] };
     }
 
-    let count = 0;
+    // Pha 1: kiểm tra toàn bộ batch, chưa ghi gì.
+    const plan: { clientId: string; fields: Record<string, unknown> }[] = [];
+
     for (const exp of experiments) {
       const rawId = exp.id ?? exp.clientId;
       const clientId =
         typeof rawId === 'string' && rawId ? rawId : randomUUID();
-      const existing = await this.experimentModel.findOne({ clientId });
+
+      const existing = await this.experimentModel
+        .findOne({ clientId })
+        .exec();
       if (existing) {
         assertOwner(existing, user);
-        if (existing.deletedAt)
+        if (existing.deletedAt) {
           throw new NotFoundException('Không tìm thấy thí nghiệm');
+        }
       }
-      const fields = dataFields(exp, 'experiment');
+
+      const fields = dataFields(exp, 'experiment') as Record<string, unknown>;
+      // Các field do server quyết định, không nhận từ client.
+      delete fields.clientId;
+      delete fields.ownerId;
+      delete fields.syncVersion;
+
       if (typeof fields.algorithm === 'string') {
         fields.algorithm = {
           type: fields.algorithm,
@@ -245,31 +266,45 @@ export class ExperimentsService {
           config: { degree: exp.degree, lambda: exp.lambda },
         };
       }
+
+      validateSyntheticConfig(fields.synthetic);
+
       if (fields.datasetId) {
-        const dataset = await this.datasetModel.findOne({
-          ...idFilter(
-            typeof fields.datasetId === 'string' ? fields.datasetId : '',
-          ),
-          ...ownerFilter(user),
-          deletedAt: { $exists: false },
-        });
+        const dataset = await this.datasetModel
+          .findOne({
+            ...idFilter(
+              typeof fields.datasetId === 'string' ? fields.datasetId : '',
+            ),
+            ...ownerFilter(user),
+            deletedAt: { $exists: false },
+          })
+          .exec();
         if (!dataset) throw new NotFoundException('Không tìm thấy dataset');
         fields.datasetId = dataset._id;
       }
-      if (existing) {
-        Object.assign(existing, fields); // Giữ chủ sở hữu đã lưu; bỏ qua ownerId client gửi.
-        existing.syncVersion += 1;
-        await existing.save();
-      } else {
-        await this.experimentModel.create({
-          ...fields,
-          clientId,
-          ownerId: user.userId,
-          syncVersion: 1,
-        });
-      }
-      count++;
+
+      plan.push({ clientId, fields });
     }
-    return { success: true, count };
+
+    // Pha 2: ghi. Tới đây mọi item đã hợp lệ.
+    const items: { id: string; syncVersion: number }[] = [];
+    for (const { clientId, fields } of plan) {
+      const updateQuery = {
+        $set: fields,
+        $setOnInsert: { ownerId: user.userId }, // chỉ gán owner khi tạo mới
+        $inc: { syncVersion: 1 },
+      } as UpdateQuery<ExperimentDocument>;
+
+      const saved = await this.experimentModel
+        .findOneAndUpdate({ clientId }, updateQuery, {
+          upsert: true,
+          new: true,
+        })
+        .exec();
+
+      items.push({ id: clientId, syncVersion: saved?.syncVersion ?? 1 });
+    }
+
+    return { success: true, count: items.length, items };
   }
 }
