@@ -18,21 +18,14 @@ import { CreateDatasetDto } from './dto/create-dataset.dto.js';
 
 @Controller('datasets')
 export class DatasetsController {
-  constructor(private readonly datasetsService: DatasetsService) { }
+  constructor(private readonly datasetsService: DatasetsService) {}
 
   /**
    * API Tải lên tệp CSV dataset
    * Validate dung lượng, định dạng, cấu trúc và lưu vào thư mục lưu trữ
    */
   @Post('upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: {
-        fileSize: Number(process.env.MAX_DATASET_FILE_SIZE || 10 * 1024 * 1024),
-        files: 1,
-      },
-    }),
-  )
+  @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: UploadedMulterFile,
     @Body('name') name: string,

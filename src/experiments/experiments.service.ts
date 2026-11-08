@@ -35,7 +35,7 @@ export class ExperimentsService {
     private readonly experimentModel: Model<ExperimentDocument>,
     @InjectModel(Dataset.name)
     private readonly datasetModel: Model<DatasetDocument>,
-  ) { }
+  ) {}
 
   /**
    * Validate algorithm config matching algorithm type
@@ -243,9 +243,7 @@ export class ExperimentsService {
       const clientId =
         typeof rawId === 'string' && rawId ? rawId : randomUUID();
 
-      const existing = await this.experimentModel
-        .findOne({ clientId })
-        .exec();
+      const existing = await this.experimentModel.findOne({ clientId }).exec();
       if (existing) {
         assertOwner(existing, user);
         if (existing.deletedAt) {
@@ -296,10 +294,15 @@ export class ExperimentsService {
       } as UpdateQuery<ExperimentDocument>;
 
       const saved = await this.experimentModel
-        .findOneAndUpdate({ clientId }, updateQuery, {
-          upsert: true,
-          new: true,
-        })
+        .findOneAndUpdate(
+          { clientId, ...ownerFilter(user), deletedAt: { $exists: false } },
+          updateQuery,
+          {
+            upsert: true,
+            returnDocument: 'after',
+            runValidators: true,
+          },
+        )
         .exec();
 
       items.push({ id: clientId, syncVersion: saved?.syncVersion ?? 1 });

@@ -19,7 +19,11 @@ export class AlgorithmInfo {
   @Prop({ default: '1.0.0' })
   version: string;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: true, default: () => ({}) })
+  @Prop({
+    type: MongooseSchema.Types.Mixed,
+    required: true,
+    default: () => ({}),
+  })
   config: Record<string, unknown>;
 }
 
@@ -70,7 +74,8 @@ export class SyntheticConfig {
   @Prop({ type: Number, required: true }) trainRatio: number;
 }
 
-export const SyntheticConfigSchema = SchemaFactory.createForClass(SyntheticConfig);
+export const SyntheticConfigSchema =
+  SchemaFactory.createForClass(SyntheticConfig);
 
 @Schema({ timestamps: true, collection: 'experiments', minimize: false })
 export class Experiment {
@@ -89,8 +94,26 @@ export class Experiment {
   @Prop({ type: Number }) iterations?: number;
   @Prop({ type: [Number], default: undefined }) w?: number[];
   @Prop({ type: Number }) b?: number;
-  @Prop({ type: { mse: Number, rmse: Number, mae: Number, r2: { type: Number, default: null } }, _id: false }) train?: { mse: number; rmse: number; mae: number; r2: number | null };
-  @Prop({ type: { mse: Number, rmse: Number, mae: Number, r2: { type: Number, default: null } }, _id: false }) test?: { mse: number; rmse: number; mae: number; r2: number | null };
+  @Prop({
+    type: {
+      mse: Number,
+      rmse: Number,
+      mae: Number,
+      r2: { type: Number, default: null },
+    },
+    _id: false,
+  })
+  train?: { mse: number; rmse: number; mae: number; r2: number | null };
+  @Prop({
+    type: {
+      mse: Number,
+      rmse: Number,
+      mae: Number,
+      r2: { type: Number, default: null },
+    },
+    _id: false,
+  })
+  test?: { mse: number; rmse: number; mae: number; r2: number | null };
   @Prop({ type: MongooseSchema.Types.Mixed }) csvData?: Record<string, unknown>;
   @Prop({ type: String }) lastMutationId?: string;
 
@@ -138,8 +161,8 @@ export class Experiment {
   @Prop({ type: SplitConfigSchema, default: () => ({}) })
   split: SplitConfig;
 
-  @Prop({ type: String, trim: true, index: true })
-  ownerId?: string;
+  @Prop({ type: String, required: true, trim: true, index: true })
+  ownerId: string;
 
   @Prop({ type: Number, default: 1 })
   syncVersion: number;

@@ -1,4 +1,5 @@
 import { RequestUser } from '../common/auth.guard.js';
+import { validateSyntheticConfig } from '../experiments/synthetic-config.validation.js';
 import {
   ownerFilter,
   idFilter,
@@ -44,7 +45,7 @@ export class SyncService {
     private readonly datasetModel: Model<DatasetDocument>,
     @InjectModel(TrainingRun.name)
     private readonly trainingRunModel: Model<TrainingRunDocument>,
-  ) { }
+  ) {}
 
   /**
    * Xử lý Batch Sync từ client offline:
@@ -176,6 +177,7 @@ export class SyncService {
         throw new NotFoundException('Không tìm thấy dữ liệu');
     }
     const payload = dataFields(op.payload || {}, 'experiment');
+    validateSyntheticConfig(payload.synthetic);
     if (op.action !== 'delete')
       await this.validateReferences(payload, 'experiment', user);
 

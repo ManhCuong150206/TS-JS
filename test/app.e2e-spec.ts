@@ -27,6 +27,7 @@ beforeAll(async () => {
   });
   uploadDir = await mkdtemp(join(tmpdir(), 'hq3d-auth-test-'));
   process.env.DATASET_STORAGE_DIR = uploadDir;
+  process.env.MAX_DATASET_FILE_SIZE = '1024'; // Giới hạn nhỏ riêng cho test upload.
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = mongo.getUri('hoi-quy-3d-test');
   process.env.SESSION_SECRET = 'test-only-secret-at-least-32-characters';
@@ -847,5 +848,243 @@ describe('Account management and audit', () => {
       (await bob.get(prefix + '/sync/changes')).body.changes.trainingRuns[0]
         .deletedAt,
     ).toBeTruthy();
+  });
+});
+
+describe('CSV upload and saved account history', () => {
+  it('enforces the configured file limit, .csv extension and valid CSV content', async () => {
+    await register('upload@example.com');
+    const agent = await login('upload@example.com');
+    const initialFiles = await readdir(uploadDir);
+    const csv = Buffer.from('x,y\n1,2\n');
+    for (const filename of ['fake.txt', 'fake.xlsx', 'fake.csv.exe']) {
+      await agent
+        .post(prefix + '/datasets/upload')
+        .set(header)
+        .attach('file', csv, { filename, contentType: 'text/csv' })
+        .expect(400);
+    }
+    await agent
+      .post(prefix + '/datasets/upload')
+      .set(header)
+      .attach('file', csv, { filename: 'image.csv', contentType: 'image/png' })
+      .expect(400);
+    for (const contents of [
+      Buffer.from([0x50, 0x4b, 0, 0]),
+      Buffer.from('x,y\n"broken,2\n'),
+      Buffer.from('x,y\n1,2,3\n'),
+    ]) {
+      await agent
+        .post(prefix + '/datasets/upload')
+        .set(header)
+        .attach('file', contents, 'bad.csv')
+        .expect(400);
+    }
+    await agent
+      .post(prefix + '/datasets/upload')
+      .set(header)
+      .expect(400);
+    await agent
+      .post(prefix + '/datasets/upload')
+      .set(header)
+      .attach('file', csv, 'a.csv')
+      .attach('file', csv, 'b.csv')
+      .expect(400);
+    const exactLimit = Buffer.from('x,y\n' + '1'.repeat(1017) + ',2\n');
+    expect(exactLimit.length).toBe(1024);
+    await agent
+      .post(prefix + '/datasets/upload')
+      .set(header)
+      .attach('file', Buffer.concat([exactLimit, Buffer.from('\n')]), 'big.csv')
+      .expect(413);
+    expect(await db.collection('datasets').countDocuments()).toBe(0);
+    expect(await readdir(uploadDir)).toEqual(initialFiles);
+    const saved = await agent
+      .post(prefix + '/datasets/upload')
+      .set(header)
+      .attach('file', exactLimit, {
+        filename: 'valid.CSV',
+        contentType: 'application/octet-stream',
+      })
+      .expect(201);
+    expect(saved.body).toMatchObject({
+      sizeBytes: 1024,
+      contentType: 'text/csv',
+    });
+  });
+
+  it('restores saved metrics, model parameters and runs after logging in again', async () => {
+    const { a, b, alice, bob } = await actors();
+    const data = await dataset(alice);
+    const snapshot = {
+      name: 'Saved regression',
+      datasetId: data._id,
+      status: 'completed',
+      algorithm: { type: 'linear', config: {} },
+      targetColumn: 'y',
+      featureColumns: ['x'],
+      learningRate: 0.01,
+      maxIterations: 1000,
+      iterations: 50,
+      w: [2],
+      b: 1,
+      train: { mse: 0.1, rmse: 0.316, mae: 0.2, r2: 0.99 },
+      test: { mse: 0.2, rmse: 0.447, mae: 0.3, r2: 0.98 },
+      synthetic: {
+        kind: 'curved',
+        version: 1,
+        sampleCount: 100,
+        featureCount: 1,
+        noise: 2,
+        seed: 42,
+        trainRatio: 0.8,
+      },
+      ownerId: b._id,
+    };
+    const saved = await alice
+      .post(prefix + '/experiments')
+      .set(header)
+      .send(snapshot)
+      .expect(201);
+    expect(saved.body).toMatchObject({
+      ownerId: a._id,
+      w: [2],
+      train: snapshot.train,
+      synthetic: snapshot.synthetic,
+    });
+    const run = await alice
+      .post(prefix + '/training-runs')
+      .set(header)
+      .send({
+        experimentId: saved.body._id,
+        algorithmType: 'linear',
+        configSnapshot: { learningRate: 0.01 },
+        metrics: snapshot.test,
+        modelParameters: { w: [2], b: 1 },
+        history: [{ step: 50, loss: 0.2, parameters: { w: [2], b: 1 } }],
+        ownerId: b._id,
+      })
+      .expect(201);
+    expect(run.body.ownerId).toBe(a._id);
+    await alice
+      .post(prefix + '/auth/logout')
+      .set(header)
+      .expect(200);
+    const again = await login('a@example.com');
+    const restored = await again.get(prefix + '/experiments').expect(200);
+    expect(restored.body.items[0]).toMatchObject({
+      ownerId: a._id,
+      w: [2],
+      b: 1,
+      iterations: 50,
+      train: snapshot.train,
+      test: snapshot.test,
+    });
+    const history = await again
+      .get(prefix + '/training-runs')
+      .query({ experimentId: saved.body.clientId })
+      .expect(200);
+    expect(history.body.total).toBe(1);
+    expect(history.body.items[0]).toMatchObject({
+      ownerId: a._id,
+      metrics: snapshot.test,
+      modelParameters: { w: [2], b: 1 },
+    });
+    await again.get(prefix + '/training-runs?experimentId=missing').expect(404);
+    expect(
+      (await bob.get(prefix + '/experiments').expect(200)).body.total,
+    ).toBe(0);
+    await bob
+      .get(prefix + '/training-runs')
+      .query({ experimentId: saved.body.clientId })
+      .expect(404);
+  });
+
+  it('keeps full snapshots and owner through bulk, PATCH and offline sync', async () => {
+    const { a, b, alice, bob } = await actors();
+    const csvData = {
+      trainX: Array.from({ length: 6000 }, () => [1.123456789, 2.123456789]),
+      trainY: Array(6000).fill(3),
+      testX: [[4, 5]],
+      testY: [6],
+    };
+    const snapshot = {
+      id: 'snapshot-bulk',
+      name: 'CSV run',
+      algorithm: 'linear',
+      dataSource: 'csv',
+      csvName: 'data.csv',
+      csvData,
+      w: [2, 3],
+      b: 4,
+      iterations: 25,
+      learningRate: 0.01,
+      maxIterations: 100,
+      degree: 2,
+      lambda: 0.5,
+      sampleCount: 6001,
+      featureCount: 2,
+      noise: 0,
+      seed: 42,
+      trainRatio: 0.8,
+      train: { mse: 1, rmse: 1, mae: 1, r2: null },
+      test: { mse: 2, rmse: 1.414, mae: 1, r2: 0.9 },
+      clientCreatedAt: 1234,
+      lastMutationId: 'save-1',
+      ownerId: b._id,
+    };
+    expect(Buffer.byteLength(JSON.stringify([snapshot]))).toBeGreaterThan(
+      100 * 1024,
+    );
+    await alice
+      .post(prefix + '/experiments/bulk')
+      .set(header)
+      .send([snapshot])
+      .expect(201);
+    const saved = await alice
+      .get(prefix + '/experiments/snapshot-bulk')
+      .expect(200);
+    expect(saved.body).toMatchObject({
+      ownerId: a._id,
+      csvData,
+      w: [2, 3],
+      train: snapshot.train,
+      lastMutationId: 'save-1',
+      clientCreatedAt: 1234,
+    });
+    await alice
+      .patch(prefix + '/experiments/snapshot-bulk')
+      .set(header)
+      .send({ w: [5, 6], b: 7, ownerId: b._id })
+      .expect(200);
+    const syncSnapshot = {
+      ...snapshot,
+      name: 'Offline run',
+      algorithm: { type: 'linear', config: {} },
+    };
+    const response = await alice
+      .post(prefix + '/sync/batch')
+      .set(header)
+      .send({
+        operations: [op('experiment', 'snapshot-sync', 'create', syncSnapshot)],
+      })
+      .expect(201);
+    expect(response.body.results[0].status).toBe('applied');
+    const changes = await alice.get(prefix + '/sync/changes').expect(200);
+    expect(changes.body.changes.experiments).toHaveLength(2);
+    expect(
+      changes.body.changes.experiments.find(
+        (item: { clientId: string }) => item.clientId === 'snapshot-sync',
+      ),
+    ).toMatchObject({ ownerId: a._id, csvData, w: [2, 3] });
+    expect(
+      (await bob.get(prefix + '/sync/changes').expect(200)).body.changes
+        .experiments,
+    ).toHaveLength(0);
+    await bob
+      .post(prefix + '/experiments/bulk')
+      .set(header)
+      .send([{ ...snapshot, name: 'Stolen' }])
+      .expect(404);
   });
 });

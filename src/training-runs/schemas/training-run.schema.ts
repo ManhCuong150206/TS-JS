@@ -99,8 +99,8 @@ export class TrainingRun {
   @Prop()
   completedAt?: Date;
 
-  @Prop({ type: String, trim: true, index: true })
-  ownerId?: string;
+  @Prop({ type: String, required: true, trim: true, index: true })
+  ownerId: string;
 
   @Prop({ type: Number, default: 1 })
   syncVersion: number;

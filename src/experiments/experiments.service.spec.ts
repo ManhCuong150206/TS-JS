@@ -42,7 +42,15 @@ describe('synthetic configuration persistence', () => {
     const service = makeService(write);
 
     await service.bulkUpsert(
-      [{ id: 'one', name: 'curve', algorithm: 'polynomial', degree: 2, synthetic }],
+      [
+        {
+          id: 'one',
+          name: 'curve',
+          algorithm: 'polynomial',
+          degree: 2,
+          synthetic,
+        },
+      ],
       user,
     );
     expect(write.mock.calls[0][1].$set.synthetic).toEqual(synthetic);
@@ -50,6 +58,7 @@ describe('synthetic configuration persistence', () => {
     const Document = model('SyntheticPersistenceCheck', ExperimentSchema);
     const doc = new Document({
       clientId: 'one',
+      ownerId: user.userId,
       name: 'curve',
       algorithm: { type: 'polynomial', config: { degree: 2 } },
       synthetic,

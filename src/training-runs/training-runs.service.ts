@@ -2,7 +2,7 @@ import { RequestUser } from '../common/auth.guard.js';
 import { ownerFilter, idFilter, dataFields } from '../common/ownership.js';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import {
   TrainingRun,
@@ -60,9 +60,13 @@ export class TrainingRunsService {
       ...ownerFilter(user),
     };
     if (experimentId) {
-      if (Types.ObjectId.isValid(experimentId)) {
-        filter.experimentId = new Types.ObjectId(experimentId);
-      }
+      const experiment = await this.experimentModel.findOne({
+        ...idFilter(experimentId),
+        ...ownerFilter(user),
+        deletedAt: { $exists: false },
+      });
+      if (!experiment) throw new NotFoundException('Không tìm thấy thí nghiệm');
+      filter.experimentId = experiment._id;
     }
 
     const skip = (page - 1) * limit;

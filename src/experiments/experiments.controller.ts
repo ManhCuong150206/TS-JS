@@ -40,7 +40,7 @@ export class ExperimentsController {
     @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('includeDeleted') includeDeleted?: string,
+    @Query('includeDeleted') _includeDeleted?: string,
   ) {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;

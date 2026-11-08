@@ -5,8 +5,10 @@ export type DatasetDocument = HydratedDocument<Dataset>;
 
 export type DatasetSourceType = 'upload' | 'sample' | 'generated';
 export type DatasetStatus = 'processing' | 'ready' | 'failed';
-export type DatasetColumnType = 'number' | 'string' | 'date' | 'boolean' | 'unknown';
-export type DatasetStorageProvider = 'local-volume' | 'gridfs' | 'object-storage';
+export type DatasetColumnType =
+  'number' | 'string' | 'date' | 'boolean' | 'unknown';
+export type DatasetStorageProvider =
+  'local-volume' | 'gridfs' | 'object-storage';
 export type DatasetFormat = 'csv' | 'json';
 
 @Schema({ _id: false })
@@ -14,7 +16,11 @@ export class DatasetColumn {
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ type: String, enum: ['number', 'string', 'date', 'boolean', 'unknown'], default: 'unknown' })
+  @Prop({
+    type: String,
+    enum: ['number', 'string', 'date', 'boolean', 'unknown'],
+    default: 'unknown',
+  })
   inferredType: DatasetColumnType;
 
   @Prop({ default: 0, min: 0 })
@@ -37,7 +43,11 @@ export const DatasetColumnSchema = SchemaFactory.createForClass(DatasetColumn);
 
 @Schema({ _id: false })
 export class DatasetStorage {
-  @Prop({ type: String, required: true, enum: ['local-volume', 'gridfs', 'object-storage'] })
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['local-volume', 'gridfs', 'object-storage'],
+  })
   provider: DatasetStorageProvider;
 
   @Prop({ required: true, trim: true })
@@ -53,7 +63,8 @@ export class DatasetStorage {
   filePath?: string;
 }
 
-export const DatasetStorageSchema = SchemaFactory.createForClass(DatasetStorage);
+export const DatasetStorageSchema =
+  SchemaFactory.createForClass(DatasetStorage);
 
 @Schema({ timestamps: true, collection: 'datasets' })
 export class Dataset {
@@ -63,7 +74,11 @@ export class Dataset {
   @Prop({ required: true, trim: true, maxlength: 120 })
   name: string;
 
-  @Prop({ type: String, required: true, enum: ['upload', 'sample', 'generated'] })
+  @Prop({
+    type: String,
+    required: true,
+    enum: ['upload', 'sample', 'generated'],
+  })
   sourceType: DatasetSourceType;
 
   @Prop({ trim: true, maxlength: 255 })
@@ -90,11 +105,16 @@ export class Dataset {
   @Prop({ type: MongooseSchema.Types.Mixed })
   generationConfig?: Record<string, unknown>;
 
-  @Prop({ type: String, enum: ['processing', 'ready', 'failed'], default: 'ready', index: true })
+  @Prop({
+    type: String,
+    enum: ['processing', 'ready', 'failed'],
+    default: 'ready',
+    index: true,
+  })
   status: DatasetStatus;
 
-  @Prop({ type: String, trim: true, index: true })
-  ownerId?: string;
+  @Prop({ type: String, required: true, trim: true, index: true })
+  ownerId: string;
 
   @Prop({ type: Number, default: 1 })
   syncVersion: number;

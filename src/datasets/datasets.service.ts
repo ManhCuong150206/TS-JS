@@ -4,7 +4,10 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  PayloadTooLargeException,
+  Inject,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
@@ -13,6 +16,7 @@ import * as path from 'node:path';
 import { Dataset, DatasetDocument } from './schemas/dataset.schema.js';
 import { CsvValidator } from '../common/csv-validator.js';
 import { CreateDatasetDto } from './dto/create-dataset.dto.js';
+import { assertCsvFile, datasetFileSize } from './upload.config.js';
 
 export class UploadedMulterFile {
   fieldname: string;
@@ -31,14 +35,12 @@ export class DatasetsService {
   constructor(
     @InjectModel(Dataset.name)
     private readonly datasetModel: Model<DatasetDocument>,
+    @Inject(ConfigService) config: ConfigService,
   ) {
     this.storageDir = path.resolve(
       process.env.DATASET_STORAGE_DIR || './data/uploads',
     );
-    this.maxFileSize = parseInt(
-      process.env.MAX_DATASET_FILE_SIZE || '10485760',
-      10,
-    ); // 10MB
+    this.maxFileSize = datasetFileSize(config);
     void this.ensureStorageDirectory();
   }
 
@@ -63,26 +65,15 @@ export class DatasetsService {
     }
 
     // 1. Kiểm tra dung lượng tệp
-    if (file.size > this.maxFileSize) {
+    if (file.buffer.length > this.maxFileSize) {
       const maxMb = (this.maxFileSize / (1024 * 1024)).toFixed(1);
-      throw new BadRequestException(
+      throw new PayloadTooLargeException(
         `Dung lượng tệp vượt quá giới hạn tối đa cho phép (${maxMb} MB).`,
       );
     }
 
     // 2. Kiểm tra định dạng hỗ trợ
-    const ext = path.extname(file.originalname).toLowerCase();
-    const validMimes = [
-      'text/csv',
-      'text/plain',
-      'application/vnd.ms-excel',
-      'application/csv',
-    ];
-    if (ext !== '.csv' && !validMimes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        'Định dạng tệp không được hỗ trợ. Hệ thống chỉ chấp nhận tệp có định dạng .csv.',
-      );
-    }
+    assertCsvFile(file);
 
     // 3. Phân tích và kiểm tra tính hợp lệ của CSV
     const validation = CsvValidator.validate(file.buffer);
@@ -111,8 +102,8 @@ export class DatasetsService {
       name: datasetName,
       sourceType: 'upload',
       originalFileName: file.originalname,
-      contentType: file.mimetype || 'text/csv',
-      sizeBytes: file.size,
+      contentType: 'text/csv',
+      sizeBytes: file.buffer.length,
       rowCount: validation.rowCount,
       columns: validation.columns,
       previewRows: validation.previewRows,
@@ -128,7 +119,13 @@ export class DatasetsService {
       syncVersion: 1,
     });
 
-    return createdDataset.save();
+    try {
+      return await createdDataset.save();
+    } catch (error) {
+      // Không để lại tệp mồ côi nếu ghi metadata vào MongoDB thất bại.
+      await fs.unlink(destinationPath);
+      throw error;
+    }
   }
 
   /**
@@ -205,9 +202,11 @@ export class DatasetsService {
       );
     }
 
-    if(!/^[a-f0-9-]{36}\.csv$/i.test(dataset.storage.key))throw new NotFoundException('Khóa tệp không hợp lệ.');
+    if (!/^[a-f0-9-]{36}\.csv$/i.test(dataset.storage.key))
+      throw new NotFoundException('Khóa tệp không hợp lệ.');
     const filePath = path.resolve(this.storageDir, dataset.storage.key);
-    if(!filePath.startsWith(this.storageDir+path.sep))throw new NotFoundException('Đường dẫn không hợp lệ.');
+    if (!filePath.startsWith(this.storageDir + path.sep))
+      throw new NotFoundException('Đường dẫn không hợp lệ.');
     try {
       await fs.access(filePath);
     } catch {

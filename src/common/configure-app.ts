@@ -37,15 +37,15 @@ export function configureApp(app: NestExpressApplication) {
       ['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) &&
       req.get('X-Requested-With') !== 'XMLHttpRequest'
     ) {
-      res
-        .status(403)
-        .json({
-          statusCode: 403,
-          message: 'Thiếu header X-Requested-With: XMLHttpRequest',
-        });
+      res.status(403).json({
+        statusCode: 403,
+        message: 'Thiếu header X-Requested-With: XMLHttpRequest',
+      });
       return;
     }
     next();
   });
   app.use(sessionMiddleware(config));
+  // Snapshot kết quả có thể chứa ma trận CSV; mặc định 100 KiB của Express quá nhỏ.
+  app.useBodyParser('json', { limit: '10mb' });
 }

@@ -29,62 +29,53 @@ export class CsvValidator {
    */
   public static parseCsvLines(csvContent: string): string[][] {
     const rows: string[][] = [];
-    let currentRow: string[] = [];
-    let currentField = '';
-    let inQuotes = false;
-
-    // Normalize newlines to LF
+    let row: string[] = [];
+    let field = '';
+    let state: 'plain' | 'quoted' | 'closed' = 'plain';
     const text = csvContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const endField = () => {
+      row.push(field.trim());
+      field = '';
+      state = 'plain';
+    };
+    const endRow = () => {
+      endField();
+      if (row.some((value) => value.length > 0)) rows.push(row);
+      row = [];
+    };
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
-      const nextChar = text[i + 1];
-
-      if (inQuotes) {
-        if (char === '"') {
-          if (nextChar === '"') {
-            currentField += '"';
-            i++; // Skip escaped quote
-          } else {
-            inQuotes = false;
-          }
-        } else {
-          currentField += char;
-        }
-      } else {
-        if (char === '"') {
-          inQuotes = true;
-        } else if (char === ',') {
-          currentRow.push(currentField.trim());
-          currentField = '';
-        } else if (char === '\n') {
-          currentRow.push(currentField.trim());
-          // Only add non-empty rows
-          if (currentRow.some(col => col.length > 0)) {
-            rows.push(currentRow);
-          }
-          currentRow = [];
-          currentField = '';
-        } else {
-          currentField += char;
-        }
+      if (state === 'quoted') {
+        if (char !== '"') field += char;
+        else if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else state = 'closed';
+        continue;
       }
+      if (char === ',') endField();
+      else if (char === '\n') endRow();
+      else if (state === 'closed') {
+        throw new Error('Có ký tự không hợp lệ sau dấu ngoặc kép đóng.');
+      } else if (char === '"') {
+        if (field.length)
+          throw new Error('Dấu ngoặc kép phải nằm ở đầu trường CSV.');
+        state = 'quoted';
+      } else field += char;
     }
-
-    if (currentField.length > 0 || currentRow.length > 0) {
-      currentRow.push(currentField.trim());
-      if (currentRow.some(col => col.length > 0)) {
-        rows.push(currentRow);
-      }
-    }
-
+    if (state === 'quoted')
+      throw new Error('Tệp CSV có dấu ngoặc kép chưa đóng.');
+    if (field.length || row.length || state === 'closed') endRow();
     return rows;
   }
 
   /**
    * Infer data type of a value
    */
-  private static inferType(val: string): 'number' | 'string' | 'date' | 'boolean' | 'unknown' {
+  private static inferType(
+    val: string,
+  ): 'number' | 'string' | 'date' | 'boolean' | 'unknown' {
     if (val === '' || val === null || val === undefined) return 'unknown';
 
     // Boolean
@@ -96,7 +87,8 @@ export class CsvValidator {
     if (!isNaN(num) && isFinite(num)) return 'number';
 
     // Date
-    if (/^\d{4}-\d{2}-\d{2}/.test(val) && !isNaN(Date.parse(val))) return 'date';
+    if (/^\d{4}-\d{2}-\d{2}/.test(val) && !isNaN(Date.parse(val)))
+      return 'date';
 
     return 'string';
   }
@@ -106,11 +98,38 @@ export class CsvValidator {
    */
   public static validate(
     content: Buffer | string,
-    options: { maxRows?: number } = {}
+    options: { maxRows?: number } = {},
   ): CsvValidationResult {
-    const rawBuffer = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf-8');
+    const rawBuffer = Buffer.isBuffer(content)
+      ? content
+      : Buffer.from(content, 'utf-8');
     const sha256 = createHash('sha256').update(rawBuffer).digest('hex');
-    const text = rawBuffer.toString('utf-8');
+    let text: string;
+    let rows: string[][];
+    try {
+      // Giải mã nghiêm ngặt: không coi file nhị phân hoặc UTF-8 hỏng là CSV.
+      text = new TextDecoder('utf-8', { fatal: true }).decode(rawBuffer);
+      // eslint-disable-next-line no-control-regex -- Chặn dữ liệu nhị phân giả CSV.
+      if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text)) {
+        throw new Error(
+          'CSV không được chứa ký tự điều khiển hoặc dữ liệu nhị phân.',
+        );
+      }
+      rows = this.parseCsvLines(text);
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [
+          error instanceof TypeError
+            ? 'Tệp CSV phải dùng mã hóa UTF-8.'
+            : (error as Error).message,
+        ],
+        columns: [],
+        rowCount: 0,
+        previewRows: [],
+        sha256,
+      };
+    }
 
     const errors: string[] = [];
     if (!text || text.trim().length === 0) {
@@ -124,11 +143,12 @@ export class CsvValidator {
       };
     }
 
-    const rows = this.parseCsvLines(text);
     if (rows.length < 2) {
       return {
         isValid: false,
-        errors: ['Tệp CSV phải có ít nhất 1 dòng tiêu đề (header) và 1 dòng dữ liệu.'],
+        errors: [
+          'Tệp CSV phải có ít nhất 1 dòng tiêu đề (header) và 1 dòng dữ liệu.',
+        ],
         columns: [],
         rowCount: 0,
         previewRows: [],
@@ -136,7 +156,9 @@ export class CsvValidator {
       };
     }
 
-    const header = rows[0].map(h => h.trim());
+    const header = rows[0].map((h) => h.trim());
+    if (header.length < 2)
+      errors.push('CSV hồi quy phải có ít nhất 2 cột (đặc trưng và mục tiêu).');
     // Check duplicate headers
     const headerSet = new Set<string>();
     for (const h of header) {
@@ -154,11 +176,13 @@ export class CsvValidator {
     const rowCount = dataRows.length;
 
     if (rowCount > maxRows) {
-      errors.push(`Số lượng dòng (${rowCount}) vượt quá giới hạn cho phép (${maxRows} dòng).`);
+      errors.push(
+        `Số lượng dòng (${rowCount}) vượt quá giới hạn cho phép (${maxRows} dòng).`,
+      );
     }
 
     // Inspect columns
-    const columns: ColumnAnalysis[] = header.map(name => ({
+    const columns: ColumnAnalysis[] = header.map((name) => ({
       name,
       inferredType: 'unknown',
       missingCount: 0,
@@ -182,13 +206,24 @@ export class CsvValidator {
 
     for (let r = 0; r < rowCount; r++) {
       const row = dataRows[r];
+      if (row.length !== header.length) {
+        errors.push(
+          `Dòng dữ liệu ${r + 1} có ${row.length} cột; cần ${header.length} cột.`,
+        );
+        break;
+      }
       const rowObj: Record<string, unknown> = {};
 
       for (let c = 0; c < header.length; c++) {
         const val = row[c] ?? '';
         const colName = header[c];
 
-        if (val === '' || val === 'null' || val === 'undefined' || val === 'NaN') {
+        if (
+          val === '' ||
+          val === 'null' ||
+          val === 'undefined' ||
+          val === 'NaN'
+        ) {
           columns[c].missingCount++;
           rowObj[colName] = null;
         } else {
@@ -236,7 +271,9 @@ export class CsvValidator {
         if (nNum / totalNonMissing >= 0.8) {
           columns[c].inferredType = 'number';
           if (numericCounts[c] > 0) {
-            columns[c].mean = Number((sumValues[c] / numericCounts[c]).toFixed(4));
+            columns[c].mean = Number(
+              (sumValues[c] / numericCounts[c]).toFixed(4),
+            );
           }
         } else if (nBool / totalNonMissing >= 0.8) {
           columns[c].inferredType = 'boolean';
