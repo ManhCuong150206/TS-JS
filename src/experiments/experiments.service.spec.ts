@@ -22,7 +22,7 @@ const synthetic = {
 
 // Ghi lại $set và trả về bản ghi giả với syncVersion = 1.
 const echoWrite = () =>
-  vi.fn((_filter: unknown, update: { $set: Record<string, unknown> }) => ({
+  vi.fn((_filter: unknown, update: { $set: Record<string, unknown> }, _options?: unknown) => ({
     exec: async () => ({ ...update.$set, syncVersion: 1 }),
   }));
 
@@ -37,7 +37,8 @@ function makeService(write: unknown) {
 }
 
 describe('synthetic configuration persistence', () => {
-  it('keeps the configuration through the bulk endpoint mapping and Mongoose schema', async () => {
+  it.each(['linear', 'curved', 'correlated', 'sparse'])('keeps %s configuration through bulk mapping and Mongoose schema', async (kind) => {
+    const syntheticConfig = { ...synthetic, kind };
     const write = echoWrite();
     const service = makeService(write);
 
@@ -48,23 +49,23 @@ describe('synthetic configuration persistence', () => {
           name: 'curve',
           algorithm: 'polynomial',
           degree: 2,
-          synthetic,
+          synthetic: syntheticConfig,
         },
       ],
       user,
     );
-    expect(write.mock.calls[0][1].$set.synthetic).toEqual(synthetic);
+    expect(write.mock.calls[0][1].$set.synthetic).toEqual(syntheticConfig);
 
-    const Document = model('SyntheticPersistenceCheck', ExperimentSchema);
+    const Document = model('SyntheticPersistenceCheck' + kind, ExperimentSchema);
     const doc = new Document({
       clientId: 'one',
       ownerId: user.userId,
       name: 'curve',
       algorithm: { type: 'polynomial', config: { degree: 2 } },
-      synthetic,
+      synthetic: syntheticConfig,
     });
     await expect(doc.validate()).resolves.toBeUndefined();
-    expect(doc.toObject().synthetic).toEqual(synthetic);
+    expect(doc.toObject().synthetic).toEqual(syntheticConfig);
   });
 
   it('rejects bad kind, unsupported version and invalid numeric generation settings before writing', async () => {
@@ -114,4 +115,25 @@ describe('synthetic configuration persistence', () => {
       items: [{ id: 'old', syncVersion: 1 }],
     });
   });
+});
+
+describe('compact bulk records', () => {
+ it('stores synthetic settings and algorithm parameters once without default insertion', async () => {
+  const write=echoWrite(); const service=makeService(write);
+  await service.bulkUpsert([{id:'compact',name:'Tên test',createdAt:1234,algorithm:'polynomial',degree:2,
+   dataSource:'synthetic',synthetic,csvName:null,noise:8,seed:42,trainRatio:.8,sampleCount:100,featureCount:2,w:[1,2],b:0}],user);
+  const fields=write.mock.calls[0][1].$set;
+  expect(fields).toMatchObject({name:'Tên test',clientCreatedAt:1234,status:'completed',synthetic,algorithm:{type:'polynomial',config:{degree:2}}});
+  for(const key of ['csvName','csvData','noise','seed','trainRatio','sampleCount','featureCount','degree','lambda','createdAt','description','preprocessing','split'])expect(fields).not.toHaveProperty(key);
+  expect((write.mock.calls[0] as unknown[])[2]).toMatchObject({setDefaultsOnInsert:false});
+ });
+ it('preserves CSV name and snapshot without synthetic fields', async () => {
+  const write=echoWrite(); const service=makeService(write);
+  const csvData={trainX:[[1]],trainY:[1],testX:[[2]],testY:[2],trainIndices:[0]};
+  await service.bulkUpsert([{id:'csv',name:'Test CSV',algorithm:'ridge',lambda:.1,dataSource:'csv',csvName:'test.csv',csvData,
+   synthetic,noise:8,sampleCount:2,featureCount:1,w:[1],b:0}],user);
+  const fields=write.mock.calls[0][1].$set;
+  expect(fields).toMatchObject({csvName:'test.csv',csvData,algorithm:{type:'ridge',config:{lambda:.1}}});
+  for(const key of ['synthetic','noise','degree','lambda'])expect(fields).not.toHaveProperty(key);
+ });
 });

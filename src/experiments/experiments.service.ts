@@ -265,6 +265,31 @@ export class ExperimentsService {
         };
       }
 
+      // Accept legacy flat payloads; persist one canonical copy of each setting.
+      if (typeof exp.clientCreatedAt === 'number' || typeof exp.createdAt === 'number') fields.clientCreatedAt = exp.clientCreatedAt ?? exp.createdAt;
+      const algorithm = fields.algorithm as { type?: string; config?: Record<string, unknown> } | undefined;
+      if (algorithm) {
+        const config = { ...algorithm.config };
+        if (algorithm.type === 'polynomial') config.degree = config.degree ?? exp.degree;
+        else delete config.degree;
+        if (algorithm.type === 'ridge' || algorithm.type === 'lasso') config.lambda = config.lambda ?? exp.lambda;
+        else delete config.lambda;
+        algorithm.config = config;
+      }
+      delete fields.degree;
+      delete fields.lambda;
+      if (fields.dataSource === 'synthetic') {
+        fields.synthetic ??= {
+          kind: 'linear', version: 1, sampleCount: exp.sampleCount, featureCount: exp.featureCount,
+          noise: exp.noise, seed: exp.seed, trainRatio: exp.trainRatio,
+        };
+        for (const key of ['csvName', 'csvData', 'sampleCount', 'featureCount', 'noise', 'seed', 'trainRatio']) delete fields[key];
+      } else if (fields.dataSource === 'csv') {
+        delete fields.synthetic;
+        delete fields.noise;
+        if (!fields.csvName) delete fields.csvName;
+      }
+      fields.status ??= Array.isArray(fields.w) ? 'completed' : 'draft';
       validateSyntheticConfig(fields.synthetic);
 
       if (fields.datasetId) {
@@ -300,6 +325,7 @@ export class ExperimentsService {
           {
             upsert: true,
             returnDocument: 'after',
+            setDefaultsOnInsert: false,
             runValidators: true,
           },
         )

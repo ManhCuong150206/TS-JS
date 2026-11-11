@@ -61,7 +61,7 @@ export const SplitConfigSchema = SchemaFactory.createForClass(SplitConfig);
 // Danh sách kind phải khớp với SYNTHETIC_KINDS trong synthetic-config.validation.ts
 @Schema({ _id: false })
 export class SyntheticConfig {
-  @Prop({ type: String, required: true, enum: ['curved'] })
+  @Prop({ type: String, required: true, enum: ['linear', 'curved', 'correlated', 'sparse'] })
   kind: string;
 
   @Prop({ type: Number, default: 1, enum: [1] })
@@ -85,7 +85,7 @@ export class Experiment {
   @Prop({ type: Number }) degree?: number;
   @Prop({ type: Number }) lambda?: number;
   @Prop({ enum: ['synthetic', 'csv'] }) dataSource?: string;
-  @Prop({ type: String, default: null }) csvName?: string | null;
+  @Prop({ type: String }) csvName?: string | null;
   @Prop({ type: Number }) sampleCount?: number;
   @Prop({ type: Number }) featureCount?: number;
   @Prop({ type: Number }) noise?: number;

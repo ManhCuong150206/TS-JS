@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
 // Phải khớp với enum của SyntheticConfig schema
-export const SYNTHETIC_KINDS = ['curved'] as const;
+export const SYNTHETIC_KINDS = ['linear', 'curved', 'correlated', 'sparse'] as const;
 
 const inRange = (x: unknown, min: number, max: number): boolean =>
     typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
