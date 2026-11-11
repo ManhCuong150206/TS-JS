@@ -15,7 +15,7 @@ Cần cài Docker Desktop và bật Docker Engine. Tạo file cấu hình Docker
 copy .env.compose.example .env.compose
 ```
 
-Mở `.env.compose`, thay `MONGO_INITDB_ROOT_PASSWORD` bằng mật khẩu ngẫu nhiên dài và cập nhật cùng mật khẩu đó trong `MONGODB_URI` (phần trước `@mongo`). Nên dùng mật khẩu chữ/số hoặc URL-encode ký tự đặc biệt trong URI. Sau đó chạy:
+Mở `.env.compose`, thay `MONGO_INITDB_ROOT_PASSWORD` bằng mật khẩu ngẫu nhiên dài và cập nhật cùng mật khẩu đó trong `MONGODB_URI` (phần trước `@mongo`). Nên dùng mật khẩu chữ/số hoặc URL-encode ký tự đặc biệt trong URI. Đặt `SESSION_SECRET` thành một chuỗi ngẫu nhiên riêng, dài ít nhất 32 ký tự, để backend ký cookie phiên. Sau đó chạy:
 
 ```bash
 npm run docker:up
@@ -23,7 +23,7 @@ npm run docker:up
 
 Mở `https://localhost`. Lần chạy đầu Compose tạo chứng thư tự ký cho localhost; trình duyệt sẽ cảnh báo vì chứng thư chưa được tin cậy. Chỉ dùng chứng thư này khi phát triển/demo. Để tắt các container, chạy `npm run docker:down`; dữ liệu MongoDB và tệp tải lên vẫn còn trong Docker volumes. Muốn xóa cả dữ liệu đã lưu, dùng `docker compose --env-file .env.compose down -v`.
 
-Nginx công khai giao diện qua cổng 80/443 và chỉ cho phép POST đồng bộ metadata tại `/api/v1/experiments/bulk`; các API đọc dữ liệu và upload CSV bị chặn ở reverse proxy. API/MongoDB không publish port trực tiếp. Không có tài khoản nên dữ liệu đã đồng bộ nằm trong DB chung của dự án, quản trị viên backend có thể truy cập. CSV thô được xử lý trong trình duyệt và không được frontend gửi lên server. IndexedDB không mã hóa dữ liệu; người dùng chung browser profile có thể truy cập, vì vậy không dùng dữ liệu nhạy cảm trên thiết bị dùng chung.
+Nginx phục vụ giao diện qua cổng 80/443 và chuyển tiếp các API đăng ký, đăng nhập, đăng xuất, khôi phục phiên và đồng bộ `/api/v1/sync/{batch,changes}`. Backend dùng cookie phiên `Secure` qua HTTPS. API tải tệp lên và các API khác vẫn ở mạng nội bộ. API và MongoDB không mở cổng trực tiếp ra ngoài. CSV thô được xử lý trong trình duyệt và không được frontend gửi lên server. IndexedDB không mã hóa dữ liệu; người dùng chung browser profile có thể truy cập, vì vậy không dùng dữ liệu nhạy cảm trên thiết bị dùng chung.
 
 Các lệnh build thủ công:
 
@@ -335,21 +335,14 @@ nest g controller ten-module
 - Thay đổi cấu trúc dữ liệu (schema) hoặc API phải **báo cả nhóm** trước khi gộp, vì Frontend và Tester phụ thuộc vào đó.
 - Một việc xong khi: code chạy được, có hướng dẫn thử, và đã được một người review.
 - Gặp lỗi thì copy **nguyên văn** thông báo lỗi gửi vào nhóm, kèm lệnh đã chạy. Nhớ **che mật khẩu** nếu có.
-<<<<<<< HEAD
-=======
 
-## Lưu thí nghiệm, xác thực và kiểm thử tích hợp (03/11/2026)
+## Lưu thí nghiệm, xác thực và kiểm thử tích hợp
 
-- FE gọi cùng origin `/api/v1`; Angular dev proxy chuyển tới NestJS `127.0.0.1:3000`. Chạy Backend trước bằng `npm run start:dev`, rồi FE bằng `npm start`. Bản FE SSR chuyển API tới `BACKEND_ORIGIN` (mặc định cùng địa chỉ Backend); không trả HTML thay cho phản hồi API.
-- Đăng ký/đăng nhập/Guest dùng `/api/v1/auth/register`, `/login`, `/guest`, `/session`, `/logout`. Mật khẩu dùng scrypt với salt riêng, session token ngẫu nhiên chỉ lưu bản hash phía server. Trình duyệt nhận cookie HttpOnly/SameSite=Lax; token không nằm trong localStorage. Không còn chấp nhận `x-user-id` hoặc Bearer chứa ID tự khai. Header `X-Expected-User` chỉ dùng đối chiếu với phiên đã xác thực, không cấp quyền.
-- Mọi dataset, experiment, training run và sync chỉ truy cập dữ liệu của chủ phiên. Guest có ID riêng, không dùng chung anonymous_user. Bản ghi cũ chưa có chủ sở hữu hợp lệ không được tự mở cho mọi người; cần migration có kiểm soát nếu muốn nhập lại dữ liệu cũ.
-- Bulk experiment lưu đủ trọng số, bias, iteration, tham số, metric, loại dữ liệu và CSV đã xử lý. Mỗi bản ghi có mutationId và serverVersion; phản hồi items xác nhận từng mutation. Xóa offline dùng tombstone; đọc danh sách `includeDeleted=true` để kéo cả các lần xóa. Xung đột trả 409, không tự ghi đè.
-- Giới hạn bản lưu 8 MiB, JSON request 10 MiB, mỗi lô tối đa 100 bản ghi. FE tự chia lô theo dung lượng. Snapshot CSV quá lớn bị báo lỗi trước khi lưu; API upload file hiện có giới hạn 10 MiB, không thay thế tự động giới hạn snapshot. File chỉ được gắn qua upload của server; metadata/sync không được tự gán storage key để tải tệp khác.
-- Production phải dùng HTTPS cổng 443 và `NODE_ENV=production` để cookie có cờ Secure; cấu hình `CORS_ORIGINS` đúng origin triển khai. Đợt này chưa xác minh chứng chỉ hoặc triển khai TLS thật. Chưa có xác minh email/quên mật khẩu/2FA.
+- FE gọi `/api/v1` cùng origin. Angular dev proxy chuyển yêu cầu đến NestJS tại `127.0.0.1:3000`. Khi chạy Docker, Nginx chuyển tiếp các yêu cầu này qua mạng nội bộ.
+- Đăng ký và đăng nhập dùng `POST /auth/register` và `POST /auth/login`. Khôi phục phiên dùng `GET /auth/me`, đăng xuất dùng `POST /auth/logout`. Backend băm mật khẩu bằng bcrypt và lưu phiên trong MongoDB. Trình duyệt giữ cookie `HttpOnly`, có cờ `Secure` khi chạy production. Guest dùng dữ liệu trong bộ nhớ trình duyệt.
+- FE gửi thí nghiệm qua `POST /sync/batch` và đọc thay đổi qua `GET /sync/changes`. Mỗi thao tác có khóa để thử lại an toàn. Backend kiểm tra quyền của chủ dữ liệu và trả kết quả từng thao tác, gồm cả trường hợp xung đột.
+- FE giới hạn mỗi lô ở 50 thao tác và 8 MiB. Backend nhận JSON tối đa 10 MiB. CSV được xử lý trong trình duyệt. Nếu người dùng lưu và đồng bộ thí nghiệm, bản lưu có thể chứa dữ liệu CSV đã xử lý.
 
-Kiểm tra: `npm test` chạy unit; `npm run test:e2e` chạy API thật với MongoDB đang hoạt động, tự tạo database `regression_test_<random>` và chỉ dọn đúng database đó. Không dùng database ứng dụng cho test. `node test/run-browser-backend.mjs` mở API test riêng trên cổng 3000 với database `regression_browser_<random>` để chạy browser FE; dừng tiến trình này rồi chạy `node test/cleanup-browser-backend.mjs` để dọn đúng database test đã ghi trong output. Không chạy helper nếu cổng 3000 đang phục vụ Backend thật.
+`npm test` chạy unit test. `npm run test:e2e` chạy API với MongoDB tạm có tên `hoi-quy-3d-test`. Để thử giao diện với API riêng, build backend rồi chạy `node test/run-browser-backend.mjs`. Helper dùng MongoDB và thư mục upload tạm, nghe mặc định trên `127.0.0.1:3001`. Trỏ dev proxy của FE tới cổng này và dùng Ctrl+C để dừng helper.
 
-Chi tiết FE và giới hạn: `FE/FE-hoiquy3d/docs/CONG-NGHE-VA-HIEU-UNG.md` trong repo FE riêng.
-
-Bảng thay đổi từng file và hướng dẫn cho người mới: [Báo cáo cập nhật 03/11/2026](BAO-CAO-CAP-NHAT-2026-11-03.md).
->>>>>>> 531624601ad681b27923cf4695a38db47d8a6e88
+Chi tiết FE và giới hạn nằm trong `FE/FE-hoiquy3d/docs/CONG-NGHE-VA-HIEU-UNG.md` của repo FE. [Báo cáo cập nhật 03/11/2026](BAO-CAO-CAP-NHAT-2026-11-03.md) ghi lại các thay đổi ở mốc cũ.

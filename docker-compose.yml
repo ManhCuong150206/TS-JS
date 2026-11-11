@@ -6,14 +6,16 @@ services:
       - ./deploy/certs:/certs
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - >-
+      - |
+        set -eu
         if [ ! -s /certs/tls.crt ] || [ ! -s /certs/tls.key ]; then
-          apk add --no-cache openssl >/dev/null &&
-          openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 365
-          -keyout /certs/tls.key -out /certs/tls.crt
-          -subj '/CN=localhost'
-          -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' &&
-          chmod 600 /certs/tls.key;
+          umask 077
+          apk add --no-cache openssl >/dev/null
+          openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+            -keyout /certs/tls.key -out /certs/tls.crt \
+            -subj '/CN=localhost' \
+            -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1'
+          chmod 600 /certs/tls.key
         fi
 
   mongo:
@@ -38,6 +40,8 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      TRUST_PROXY: 'true'
+      SESSION_SECRET: ${SESSION_SECRET:?Set a SESSION_SECRET of at least 32 characters}
       PORT: 3000
       MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI in .env}
       DATASET_STORAGE_DIR: /app/data/uploads
