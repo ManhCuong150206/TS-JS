@@ -76,8 +76,7 @@ interface Page<T> {
 // totalPages = ceil(total/limit), bằng 0 khi total=0.
 ```
 
-Mặc định page=1, limit=20. Users validate số nguyên dương, limit<=100.
-List dữ liệu cũ chỉ parseInt, chưa có validation/cap tương đương; client nên gửi page>=1, limit=20..100.
+Mặc định `page=1`, `limit=20`. Các API danh sách users, datasets, experiments và training runs nhận số nguyên dương và giới hạn `limit` tối đa 100. Giá trị không hợp lệ trả `400`.
 Sort dataset/run theo createdAt giảm dần, experiment theo updatedAt giảm dần, users theo createdAt rồi _id giảm dần.
 
 ## 2. Toàn bộ endpoint và tên hàm
@@ -108,7 +107,7 @@ mọi route bảo vệ có thể 401. Chi tiết body/response/lỗi ở các m�
 | GET    | `/datasets/:id/download` | DatasetsController.downloadFile → DatasetsService.getFilePath, res.download | id                       | 200 file                 | Owner/admin           |
 | DELETE | `/datasets/:id`          | DatasetsController.remove → DatasetsService.remove                          | id                       | 200 {success,message}    | Owner/admin           |
 | POST   | `/experiments`           | ExperimentsController.create → ExperimentsService.create                    | CreateExperimentDto      | 201 Experiment           | User                  |
-| POST   | `/experiments/bulk`      | ExperimentsController.bulkUpsert → ExperimentsService.bulkUpsert            | array snapshot           | 201 BulkResult           | User, owner từng item |
+| POST   | `/experiments/bulk`      | ExperimentsController.bulkUpsert → ExperimentsService.bulkUpsert            | array snapshot           | 200 BulkResult           | User, owner từng item |
 | GET    | `/experiments`           | ExperimentsController.findAll → ExperimentsService.findAll                  | page,limit               | 200 Page<Experiment>     | User                  |
 | GET    | `/experiments/:id`       | ExperimentsController.findOne → ExperimentsService.findOne                  | id                       | 200 Experiment           | Owner/admin           |
 | PATCH  | `/experiments/:id`       | ExperimentsController.update → ExperimentsService.update                    | UpdateExperimentDto      | 200 Experiment           | Owner/admin           |
@@ -388,7 +387,7 @@ noise 0..50; seed safe integer; trainRatio 0.5..0.95. Backend **không sinh dữ
 | neural-network | `{"hiddenLayers":[16,8]}`       | mảng số nguyên dương                                             |
 
 Config cần object. PATCH chỉ validateAlgorithm khi có cả type và config.
-Bulk/sync không chạy cùng validateAlgorithm như create; client vẫn nên tuân theo bảng.
+Create và bulk kiểm tra cấu hình thuật toán theo bảng. Với /sync/batch, dùng cấu trúc algorithm dạng object.
 Top-level degree/lambda và giá trị trong algorithm.config lưu riêng; giữ chúng nhất quán.
 Không tự suy ra schema có neural-network nghĩa là backend đã có hàm huấn luyện mạng.
 
@@ -402,13 +401,11 @@ PATCH nhận Snapshot, name/description/status/algorithm/targetColumn/featureCol
 datasetId bị bỏ qua. Object.assign không deep merge cấu hình lồng nhau. PATCH tăng syncVersion,
 nhưng không so expected version; cần conflict thì dùng sync cho experiment.
 DELETE soft-delete, tăng syncVersion, trả `{"success":true,"message":"Đã xóa thí nghiệm thành công."}`;
-không cascade training run. Query `includeDeleted` có trong controller nhưng **đang bị bỏ qua**;
-list luôn loại deletedAt. Đọc tombstone bằng `/sync/changes`.
+không cascade training run. Danh sách loại bản đã xóa. Đọc bản ghi đánh dấu xóa qua `/sync/changes`.
 
 ### 5.4 POST /experiments/bulk
 
-Body **array trực tiếp**, không bọc `{experiments:[...]}`.
-Mỗi item mới nên có id/name/algorithm và snapshot; id lấy `item.id ?? item.clientId`, thiếu thì UUID server.
+Body là mảng trực tiếp, tối đa 100 mục và 10 MiB mỗi request. Mỗi mục có `id` (alias `clientId`) duy nhất trong lô. Mảng rỗng trả `200` với `items: []`. Thí nghiệm mới cần tên và thuật toán. Ví dụ tạo thí nghiệm tổng hợp ở trạng thái nháp.
 
 ```json
 [
@@ -416,21 +413,13 @@ Mỗi item mới nên có id/name/algorithm và snapshot; id lấy `item.id ?? i
     "id": "exp-client-1",
     "name": "Linear đã chạy",
     "algorithm": "linear",
-    "dataSource": "synthetic",
-    "learningRate": 0.01,
-    "maxIterations": 1000,
-    "iterations": 50,
-    "w": [2],
-    "b": 1,
-    "train": { "mse": 0.1, "rmse": 0.316, "mae": 0.2, "r2": 0.99 },
-    "test": { "mse": 0.2, "rmse": 0.447, "mae": 0.3, "r2": 0.98 }
+    "lastMutationId": "save-1",
+    "expectedVersion": 0
   }
 ]
 ```
 
-Algorithm có thể object hoặc string. String chuyển thành
-`{type:algorithm,version:'1.0.0',config:{degree:item.degree,lambda:item.lambda}}`.
-Muốn gửi solver/hiddenLayers dùng object. DatasetId optional; nếu có sẽ kiểm tra quyền/resolve.
+`expectedVersion` bằng 0 khi tạo, hoặc bằng phiên bản cuối client đã đọc hoặc nhận. Dùng cùng `lastMutationId` khi thử lại và tạo mã mới cho nội dung mới. Server kiểm tra quyền, xác nhận lại thao tác đã ghi nếu nó vẫn là phiên bản hiện tại, và kiểm tra phiên bản ngay trong phép ghi MongoDB. Client cũ chỉ gửi `id` và dữ liệu vẫn dùng chế độ tương thích không kiểm tra phiên bản. Dùng luồng có phiên bản cho tích hợp mới.
 
 ```json
 {
@@ -440,10 +429,23 @@ Muốn gửi solver/hiddenLayers dùng object. DatasetId optional; nếu có s�
 }
 ```
 
-Version trên minh họa, luôn lấy số thực tế trả về. Upsert theo clientId, tăng version mỗi lần ghi,
-chỉ gán owner khi insert. Kiểm tra owner/synthetic/reference toàn batch trước vòng ghi nhưng **không transaction**;
-lỗi schema/DB giữa vòng ghi có thể đã lưu item trước. Không có compare-and-swap theo version hay idempotency theo lastMutationId.
-Array rỗng (hiện cả input không phải array) trả success/count=0/items=[]. Client phải gửi đúng array.
+Khi có xung đột, API trả `409`. Ví dụ một thí nghiệm đã được ghi, một thí nghiệm đã có phiên bản mới hơn.
+
+```json
+{
+  "success": false,
+  "count": 1,
+  "items": [{ "id": "exp-client-2", "syncVersion": 1 }],
+  "conflicts": [{ "id": "exp-client-1", "syncVersion": 3 }],
+  "errors": [],
+  "message": "Có thí nghiệm đã thay đổi trên máy chủ."
+}
+```
+
+- `items` chỉ gồm mục đã được xác nhận, kể cả khi trả mã lỗi. `syncVersion: null` trong `conflicts` nghĩa là máy chủ không trả được phiên bản hiện tại cho mục đó.
+- Lỗi đầu vào phát hiện trước khi ghi trả `400`. Lỗi kiểm tra khi ghi có thể trả `400` kèm `items` và `errors`. Gián đoạn cơ sở dữ liệu trả `500` kèm những mục đã xác nhận trước lúc lỗi.
+- FE giữ các mục chưa xác nhận trong IndexedDB. Với xung đột, FE đọc chi tiết bản máy chủ và cho người dùng chọn dùng bản đó hoặc giữ bản cục bộ thành bản sao. Việc thử lại bắt đầu khi người dùng bấm Đồng bộ.
+- `/experiments/bulk` phục vụ đồng bộ thí nghiệm từ FE. `/sync/batch` nhận các thao tác tạo, cập nhật và xóa trên nhiều loại tài nguyên theo cấu trúc riêng ở mục 7.
 
 ### 5.5 csvData và việc phục hồi
 

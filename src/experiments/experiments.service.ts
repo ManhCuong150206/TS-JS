@@ -8,10 +8,13 @@ import {
 import {
   Injectable,
   BadRequestException,
+  HttpException,
+  HttpStatus,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, UpdateQuery } from 'mongoose';
+import { Error as MongooseError, Model, UpdateQuery } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 import {
   Experiment,
@@ -28,8 +31,19 @@ import {
 } from '../datasets/schemas/dataset.schema.js';
 import { validateSyntheticConfig } from './synthetic-config.validation.js';
 
+export interface BulkItem {
+  id: string;
+  syncVersion: number;
+}
+
+interface BulkConflict {
+  id: string;
+  syncVersion: number | null;
+}
+
 @Injectable()
 export class ExperimentsService {
+  private readonly logger = new Logger(ExperimentsService.name);
   constructor(
     @InjectModel(Experiment.name)
     private readonly experimentModel: Model<ExperimentDocument>,
@@ -79,7 +93,7 @@ export class ExperimentsService {
       case 'ridge':
       case 'lasso': {
         const lambda = config.lambda;
-        if (typeof lambda !== 'number' || isNaN(lambda) || lambda < 0) {
+        if (typeof lambda !== 'number' || !Number.isFinite(lambda) || lambda < 0) {
           throw new BadRequestException(
             `${type} requires non-negative lambda parameter.`,
           );
@@ -224,29 +238,50 @@ export class ExperimentsService {
   }
 
   async bulkUpsert(
-    experiments: Record<string, unknown>[],
+    experiments: unknown,
     user: RequestUser,
-  ): Promise<{
-    success: boolean;
-    count: number;
-    items: { id: string; syncVersion: number }[];
-  }> {
-    if (!Array.isArray(experiments) || experiments.length === 0) {
-      return { success: true, count: 0, items: [] };
+  ): Promise<{ success: true; count: number; items: BulkItem[] }> {
+    if (!Array.isArray(experiments) || experiments.length > 100) {
+      throw new BadRequestException('Gửi một mảng tối đa 100 thí nghiệm.');
     }
 
-    // Pha 1: kiểm tra toàn bộ batch, chưa ghi gì.
-    const plan: { clientId: string; fields: Record<string, unknown> }[] = [];
+    const seen = new Set<string>();
+    const plan: {
+      clientId: string;
+      fields: Record<string, unknown>;
+      expectedVersion?: number;
+      mutationId?: string;
+      existing: ExperimentDocument | null;
+    }[] = [];
 
-    for (const exp of experiments) {
+    for (const input of experiments as unknown[]) {
+      if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        throw new BadRequestException('Mỗi mục đồng bộ phải là một object.');
+      }
+      const exp = input as Record<string, unknown>;
       const rawId = exp.id ?? exp.clientId;
-      const clientId =
-        typeof rawId === 'string' && rawId ? rawId : randomUUID();
+      if (typeof rawId !== 'string' || !rawId.trim() || rawId.length > 128) {
+        throw new BadRequestException('Mỗi thí nghiệm cần id hợp lệ, tối đa 128 ký tự.');
+      }
+      const clientId = rawId.trim();
+      if (seen.has(clientId)) throw new BadRequestException('Trùng id trong lô đồng bộ.');
+      seen.add(clientId);
+      const expectedVersion = exp.expectedVersion;
+      const mutationId = exp.lastMutationId;
+      if (mutationId !== undefined && (typeof mutationId !== 'string' || !mutationId.trim() || mutationId.length > 128)) {
+        throw new BadRequestException('lastMutationId phải là chuỗi từ 1 đến 128 ký tự.');
+      }
+      if (expectedVersion !== undefined && (
+        typeof expectedVersion !== 'number' || !Number.isSafeInteger(expectedVersion) ||
+        expectedVersion < 0 || expectedVersion >= Number.MAX_SAFE_INTEGER || typeof mutationId !== 'string'
+      )) {
+        throw new BadRequestException('expectedVersion cần là số nguyên không âm và đi cùng lastMutationId.');
+      }
 
       const existing = await this.experimentModel.findOne({ clientId }).exec();
       if (existing) {
         assertOwner(existing, user);
-        if (existing.deletedAt) {
+        if (existing.deletedAt && expectedVersion === undefined) {
           throw new NotFoundException('Không tìm thấy thí nghiệm');
         }
       }
@@ -267,8 +302,14 @@ export class ExperimentsService {
 
       // Accept legacy flat payloads; persist one canonical copy of each setting.
       if (typeof exp.clientCreatedAt === 'number' || typeof exp.createdAt === 'number') fields.clientCreatedAt = exp.clientCreatedAt ?? exp.createdAt;
+      if (fields.algorithm !== undefined && (
+        !fields.algorithm || typeof fields.algorithm !== 'object' || Array.isArray(fields.algorithm)
+      )) throw new BadRequestException('Thuật toán không hợp lệ.');
       const algorithm = fields.algorithm as { type?: string; config?: Record<string, unknown> } | undefined;
       if (algorithm) {
+        if (algorithm.config !== undefined && (
+          !algorithm.config || typeof algorithm.config !== 'object' || Array.isArray(algorithm.config)
+        )) throw new BadRequestException('Cấu hình thuật toán không hợp lệ.');
         const config = { ...algorithm.config };
         if (algorithm.type === 'polynomial') config.degree = config.degree ?? exp.degree;
         else delete config.degree;
@@ -289,7 +330,17 @@ export class ExperimentsService {
         delete fields.noise;
         if (!fields.csvName) delete fields.csvName;
       }
-      fields.status ??= Array.isArray(fields.w) ? 'completed' : 'draft';
+      fields.status ??= existing?.status ?? (Array.isArray(fields.w) ? 'completed' : 'draft');
+      if (fields.name !== undefined || !existing) {
+        if (typeof fields.name !== 'string' || !fields.name.trim() || fields.name.length > 120) {
+          throw new BadRequestException('Tên thí nghiệm cần từ 1 đến 120 ký tự.');
+        }
+      }
+      if (algorithm) this.validateAlgorithm(algorithm.type as AlgorithmType, algorithm.config ?? {});
+      else if (!existing) throw new BadRequestException('Thiếu thuật toán cho thí nghiệm mới.');
+      if (fields.status !== undefined && !['draft', 'ready', 'running', 'completed', 'error'].includes(String(fields.status))) {
+        throw new BadRequestException('Trạng thái thí nghiệm không hợp lệ.');
+      }
       validateSyntheticConfig(fields.synthetic);
 
       if (fields.datasetId) {
@@ -306,34 +357,84 @@ export class ExperimentsService {
         fields.datasetId = dataset._id;
       }
 
-      plan.push({ clientId, fields });
+      plan.push({ clientId, fields, expectedVersion, mutationId, existing });
     }
 
-    // Pha 2: ghi. Tới đây mọi item đã hợp lệ.
-    const items: { id: string; syncVersion: number }[] = [];
-    for (const { clientId, fields } of plan) {
-      const updateQuery = {
-        $set: fields,
-        $setOnInsert: { ownerId: user.userId }, // chỉ gán owner khi tạo mới
-        $inc: { syncVersion: 1 },
-      } as UpdateQuery<ExperimentDocument>;
+    const items: BulkItem[] = [];
+    const conflicts: BulkConflict[] = [];
+    const errors: { id: string; message: string }[] = [];
+    const report = () => ({ success: false, count: items.length, items, conflicts, errors });
 
-      const saved = await this.experimentModel
-        .findOneAndUpdate(
-          { clientId, ...ownerFilter(user), deletedAt: { $exists: false } },
-          updateQuery,
-          {
-            upsert: true,
-            returnDocument: 'after',
-            setDefaultsOnInsert: false,
-            runValidators: true,
-          },
-        )
-        .exec();
+    for (const { clientId, fields, expectedVersion, mutationId, existing } of plan) {
+      const guarded = expectedVersion !== undefined;
+      const replay = (record: ExperimentDocument | null) =>
+        guarded && record && !record.deletedAt &&
+        record.lastMutationId === mutationId && record.syncVersion === expectedVersion + 1;
+      if (replay(existing) && existing) {
+        items.push({ id: clientId, syncVersion: existing.syncVersion });
+        continue;
+      }
+      if (guarded && (existing?.deletedAt || (existing?.syncVersion ?? 0) !== expectedVersion)) {
+        conflicts.push({ id: clientId, syncVersion: existing?.syncVersion ?? null });
+        continue;
+      }
 
-      items.push({ id: clientId, syncVersion: saved?.syncVersion ?? 1 });
+      const filter = { clientId, ...ownerFilter(user), deletedAt: { $exists: false } };
+      const versionFilter = expectedVersion === 1
+        ? { $or: [{ syncVersion: 1 }, { syncVersion: { $exists: false } }] }
+        : { syncVersion: expectedVersion };
+      // Match and update the version in the same database operation.
+      const updateQuery: UpdateQuery<ExperimentDocument> = {
+        $set: guarded ? { ...fields, syncVersion: expectedVersion + 1 } : fields,
+        $setOnInsert: { ownerId: user.userId },
+        ...(guarded ? {} : { $inc: { syncVersion: 1 } }),
+      };
+
+      try {
+        let saved: ExperimentDocument | null = null;
+        try {
+          saved = await this.experimentModel.findOneAndUpdate(
+            guarded ? { ...filter, ...versionFilter } : filter,
+            updateQuery,
+            {
+              upsert: !guarded || !existing,
+              returnDocument: 'after',
+              setDefaultsOnInsert: false,
+              runValidators: true,
+            },
+          ).exec();
+        } catch (error) {
+          // Concurrent creates can both miss the record. The unique clientId index picks one.
+          if (!guarded || !(error instanceof Error) || !('code' in error) || error.code !== 11000) throw error;
+        }
+
+        if (saved) {
+          items.push({ id: clientId, syncVersion: saved.syncVersion });
+          continue;
+        }
+        const current = await this.experimentModel.findOne({ clientId, ...ownerFilter(user) }).exec();
+        if (replay(current) && current) {
+          items.push({ id: clientId, syncVersion: current.syncVersion });
+        } else {
+          conflicts.push({ id: clientId, syncVersion: current?.syncVersion ?? null });
+        }
+      } catch (error) {
+        if (error instanceof MongooseError.ValidationError || error instanceof MongooseError.CastError) {
+          errors.push({ id: clientId, message: 'Dữ liệu thí nghiệm không hợp lệ.' });
+          continue;
+        }
+        this.logger.error('Không thể ghi lô thí nghiệm.', error instanceof Error ? error.stack : undefined);
+        throw new HttpException({ ...report(), message: 'Đồng bộ gián đoạn. Có thể thử lại các mục còn chờ.' }, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
     }
 
+    if (conflicts.length || errors.length) {
+      const status = conflicts.length ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST;
+      const message = conflicts.length
+        ? 'Có thí nghiệm đã thay đổi trên máy chủ.'
+        : 'Có thí nghiệm không hợp lệ.';
+      throw new HttpException({ ...report(), message }, status);
+    }
     return { success: true, count: items.length, items };
   }
 }

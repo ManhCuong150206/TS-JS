@@ -1,3 +1,4 @@
+import { pagination } from '../common/pagination.js';
 import {
   Injectable,
   Inject,
@@ -40,7 +41,8 @@ export class UsersService {
     return user;
   }
   async list(query: ListUsersDto) {
-    const { page, limit, search } = query;
+    const { search } = query;
+    const { page, limit } = pagination(query.page, query.limit);
     // Escape regex để search được coi là văn bản, không phải biểu thức do client chạy.
     const escaped = search?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const filter = escaped
