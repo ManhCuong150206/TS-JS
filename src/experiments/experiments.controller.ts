@@ -1,5 +1,6 @@
 import {
   Controller,
+  HttpCode,
   Post,
   Get,
   Patch,
@@ -9,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ExperimentsService } from './experiments.service.js';
+import { pagination } from '../common/pagination.js';
 import { CurrentUser, RequestUser } from '../common/auth.guard.js';
 import {
   CreateExperimentDto,
@@ -28,8 +30,9 @@ export class ExperimentsController {
   }
 
   @Post('bulk')
+  @HttpCode(200)
   async bulkUpsert(
-    @Body() experiments: Record<string, unknown>[],
+    @Body() experiments: unknown,
     @CurrentUser() user: RequestUser,
   ) {
     return this.experimentsService.bulkUpsert(experiments, user);
@@ -40,10 +43,8 @@ export class ExperimentsController {
     @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('includeDeleted') _includeDeleted?: string,
   ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const { page: pageNum, limit: limitNum } = pagination(page, limit);
     return this.experimentsService.findAll(user, pageNum, limitNum);
   }
 

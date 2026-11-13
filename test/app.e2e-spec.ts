@@ -824,7 +824,7 @@ describe('Account management and audit', () => {
       .post(prefix + '/experiments/bulk')
       .set(header)
       .send([{ clientId: exp.clientId, ownerId: a._id, name: 'Bulk edit' }])
-      .expect(201);
+      .expect(200);
     expect(
       (await bob.get(prefix + '/experiments/' + exp._id)).body.ownerId,
     ).toBe(b._id);
@@ -1040,7 +1040,7 @@ describe('CSV upload and saved account history', () => {
       .post(prefix + '/experiments/bulk')
       .set(header)
       .send([snapshot])
-      .expect(201);
+      .expect(200);
     const saved = await alice
       .get(prefix + '/experiments/snapshot-bulk')
       .expect(200);
@@ -1087,4 +1087,50 @@ describe('CSV upload and saved account history', () => {
       .send([{ ...snapshot, name: 'Stolen' }])
       .expect(404);
   });
+
+  it('rejects invalid bulk input before writing and validates list pagination', async () => {
+    await register('pagination@example.com');
+    const user = await login('pagination@example.com');
+    const row = { id: 'not-written', name: 'Valid row', algorithm: 'linear' };
+
+    await user.post(prefix + '/experiments/bulk').set(header).send({ experiments: [row] }).expect(400);
+    await user.post(prefix + '/experiments/bulk').set(header).send([row, null]).expect(400);
+    await user.post(prefix + '/experiments/bulk').set(header).send([row, row]).expect(400);
+    await user.get(prefix + '/experiments/not-written').expect(404);
+    for (const path of ['/experiments', '/datasets', '/training-runs']) {
+      await user.get(prefix + path + '?page=2abc').expect(400);
+      await user.get(prefix + path + '?limit=101').expect(400);
+      const result = await user.get(prefix + path + '?page=2&limit=10').expect(200);
+      expect(result.body).toMatchObject({ page: 2, limit: 10 });
+    }
+  });
+
+  it('acknowledges a replay after a lost response, rejects stale writes and reports partial success', async () => {
+    await register('replay@example.com');
+    const user = await login('replay@example.com');
+    const bulk = (rows: object[]) => user.post(prefix + '/experiments/bulk').set(header).send(rows);
+    const first = { id: 'shared', name: 'Original', algorithm: 'linear', lastMutationId: 'save-1', expectedVersion: 0 };
+    const second = { ...first, name: 'Updated', lastMutationId: 'save-2', expectedVersion: 1 };
+    const stale = { ...second, name: 'Stale', lastMutationId: 'other-device' };
+    const independent = { ...first, id: 'another', lastMutationId: 'save-other' };
+
+    await bulk([first]).expect(200);
+    const replay = await bulk([first]).expect(200);
+    expect(replay.body.items).toEqual([{ id: 'shared', syncVersion: 1 }]);
+    const updated = await bulk([second]).expect(200);
+    expect(updated.body.items).toEqual([{ id: 'shared', syncVersion: 2 }]);
+
+    const partial = await bulk([stale, independent]).expect(409);
+    expect(partial.body).toMatchObject({
+      success: false,
+      count: 1,
+      conflicts: [{ id: 'shared', syncVersion: 2 }],
+      items: [{ id: 'another', syncVersion: 1 }],
+    });
+    const saved = await user.get(prefix + '/experiments/shared').expect(200);
+    expect(saved.body).toMatchObject({ name: 'Updated', syncVersion: 2 });
+    const repeated = await bulk([independent]).expect(200);
+    expect(repeated.body.items).toEqual(partial.body.items);
+  });
+
 });

@@ -13,6 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DatasetsService, UploadedMulterFile } from './datasets.service.js';
+import { pagination } from '../common/pagination.js';
 import { CurrentUser, RequestUser } from '../common/auth.guard.js';
 import { CreateDatasetDto } from './dto/create-dataset.dto.js';
 
@@ -54,8 +55,7 @@ export class DatasetsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNum = page ? parseInt(page, 10) : 1;
-    const limitNum = limit ? parseInt(limit, 10) : 20;
+    const { page: pageNum, limit: limitNum } = pagination(page, limit);
     return this.datasetsService.findAll(user, pageNum, limitNum);
   }
 
