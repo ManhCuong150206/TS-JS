@@ -79,6 +79,7 @@ export const SyntheticConfigSchema =
 
 @Schema({ timestamps: true, collection: 'experiments', minimize: false })
 export class Experiment {
+  @Prop({ type: MongooseSchema.Types.Mixed }) learningReport?: Record<string, unknown>;
   @Prop({ type: Number }) clientCreatedAt?: number;
   @Prop({ type: Number }) learningRate?: number;
   @Prop({ type: Number }) maxIterations?: number;

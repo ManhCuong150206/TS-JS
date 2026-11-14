@@ -7,6 +7,7 @@ import {
 
 // Các trường đã có trong schema, dùng để lưu và dựng lại một lần chạy.
 export class ExperimentSnapshotDto {
+  learningReport?: Record<string, unknown>;
   clientCreatedAt?: number;
   learningRate?: number;
   maxIterations?: number;

@@ -66,6 +66,7 @@ export function dataFields(
       'test',
       'csvData',
       'lastMutationId',
+      'learningReport',
     ],
     trainingRun: [
       'experimentId',

@@ -233,6 +233,8 @@ Frontend hiện không gọi nhóm sync này trong luồng lưu thí nghiệm. K
 
 ## 5. Cấu trúc dữ liệu và ý nghĩa kết quả
 
+**Cập nhật quy trình học ngày 14/11/2026:** experiment có thêm `learningReport` tùy chọn, lưu protocol chia train/validation/test, validation metrics, thời gian tính toán/khởi tạo, lý do dừng, giả thuyết và nhận xét. Frontend dùng validation để thử siêu tham số, chỉ mở test theo lựa chọn đánh giá cuối; trường `test` trong bản kết quả đã lưu vẫn là test thực. CSV snapshot có thể chứa validationX/validationY. Bản cũ giữ nguyên cách chia đã lưu. Xem [chi tiết cải thiện quy trình học](CAI-TIEN-QUY-TRINH-HOC-2026-11-14.md). Các phép đo do client cung cấp, không phải benchmark hay kết quả backend xác minh.
+
 | Collection | Trường tiêu biểu | Mục đích |
 | --- | --- | --- |
 | users | email, passwordHash, displayName, role, status, sessionVersion | Tài khoản |

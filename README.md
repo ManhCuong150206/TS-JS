@@ -12,6 +12,7 @@ Web app trực quan hóa quá trình học của mô hình hồi quy trong khôn
 - [Báo cáo API dùng cho tiểu luận](docs/BAO-CAO-API-TIEU-LUAN.md): kiến trúc, chức năng, 27 endpoint, dữ liệu vào/ra, phân quyền và sơ đồ xử lý theo mã nguồn ngày 14/11/2026.
 - [API Handbook](docs/API-HANDBOOK.md): hợp đồng tích hợp và giới hạn hiện tại.
 - [Ghi chú kiểm chứng](docs/KIEM-CHUNG-BAO-CAO-API.md): phạm vi rà soát và kết quả kiểm thử thực tế.
+- [Cải thiện quy trình học và biểu diễn 3D](docs/CAI-TIEN-QUY-TRINH-HOC-2026-11-14.md): train/validation/test, giả thuyết và so sánh lần thử, thời gian tính toán, điều khiển từng pha A–F.
 
 ## Tài liệu từng module backend
 

@@ -957,6 +957,9 @@ describe('CSV upload and saved account history', () => {
     };
     const snapshot = {
       id: 'snapshot-bulk',
+      learningReport: { protocol: 'train-validation-test-v1', computeMs: 12.5, setupMs: 1.2,
+        reason: 'max-iterations', hypothesis: 'Lower learning rate',
+        validation: { mse: 1.5, rmse: 1.225, mae: 1, r2: .8 }, finalTestViewed: true },
       name: 'CSV run',
       algorithm: 'linear',
       dataSource: 'csv',
@@ -994,6 +997,7 @@ describe('CSV upload and saved account history', () => {
     expect(saved.body).toMatchObject({
       ownerId: a._id,
       csvData,
+      learningReport: snapshot.learningReport,
       w: [2, 3],
       train: snapshot.train,
       lastMutationId: 'save-1',

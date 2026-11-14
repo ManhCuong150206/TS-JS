@@ -49,6 +49,8 @@
 
 ## 3. Hợp đồng dữ liệu
 
+- Experiment có `learningReport` tùy chọn: protocol `train-validation-test-v1`, computeMs/setupMs, reason, hypothesis/conclusion, mode, validation metrics, finalTestViewed. CSV snapshot mới có validationX/validationY. FE mới dùng validation để chọn tham số; test chỉ mở theo thao tác đánh giá cuối. Với protocol mới, synthetic.trainRatio là phần phát triển, chia tiếp 80% train/20% validation; bản cũ giữ train/test cũ. Không thêm endpoint. Xem [quy trình học](CAI-TIEN-QUY-TRINH-HOC-2026-11-14.md).
+
 - Public user: _id, email, displayName, role, status, createdAt, updatedAt; không passwordHash/sessionVersion.
 - Email trim/chữ thường; mật khẩu 8–72 ký tự và tối đa 72 byte UTF-8; displayName 1–120 ký tự sau trim.
 - Đăng ký bỏ role/ownerId, tạo role user. Đăng ký không tạo phiên, phải login riêng. Login/register giới hạn 5 yêu cầu/60 giây theo throttler.

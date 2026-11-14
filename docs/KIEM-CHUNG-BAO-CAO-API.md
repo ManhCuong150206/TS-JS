@@ -2,7 +2,13 @@
 
 Ngày rà soát: 14/11/2026. Đây là ghi chú bằng chứng đi kèm [báo cáo API tiểu luận](BAO-CAO-API-TIEU-LUAN.md), không phải tuyên bố toàn bộ hệ thống đã nghiệm thu.
 
+**Lượt tinh chỉnh bố cục tiếp theo:** hướng dẫn mặc định thu gọn, nội dung mở có giới hạn chiều cao, tự đóng khi chạy; chỉ số giữ phía trên khi cuộn. Bề mặt trang học luôn hiện từ A đến F. Production build frontend đạt; **200/200 unit test (31 file) đạt**. Bật isolate cho unit test để mock localStorage không ảnh hưởng chéo giữa các file. Hai nhóm browser compact-learning và experiment-workflow đạt; đã xem ảnh desktop/mobile và bề mặt ở pha A. Không đổi backend/API trong lượt tinh chỉnh này; các kết quả backend bên dưới là lần kiểm tra trước.
+
 ## Kết quả hiện tại sau khi dọn route cũ
+
+**Cập nhật tiếp — quy trình học và mô hình 3D:** đã thêm validation, hướng dẫn thực nghiệm, nhật ký so sánh, đo thời gian worker và điều khiển từng pha mặc định. Backend giữ nguyên 27 endpoint, bổ sung trường tùy chọn learningReport trong experiment. Backend build đạt; **38/38 unit test, 21/21 API E2E đạt**, gồm round-trip learningReport qua bulk/GET với MongoDB tạm. Frontend production build đạt (còn cảnh báo dung lượng CSS ở các file cũ); **197/197 unit test đạt**. Browser đã đạt các nhóm experiment-workflow, lab, page-modes và learning-offline; dùng Worker thật, API fixture cho luồng xác thực/lưu/sync, không ghi MongoDB ứng dụng. Ảnh desktop/mobile đã được xem. Chưa kiểm thử Docker/HTTPS trong đợt này. Xem [phạm vi và hướng dẫn](CAI-TIEN-QUY-TRINH-HOC-2026-11-14.md).
+
+Kiểm tra bổ sung: nhóm browser smooth-learning và model-integrity đều đạt, tổng **6 nhóm browser đã kiểm tra**, không phải toàn bộ E2E. Model-integrity chạy lại với phiên browser riêng sau khi lần dùng chung phiên bị vướng trạng thái đăng nhập. Lượt unit cuối vẫn **197/197 đạt** sau khi bổ sung giữ cảnh báo đã xem test khi tạo lại cùng seed. Cảnh báo đã xem test theo dõi trong phiên hiện tại và khôi phục khi mở bản đã lưu có finalTestViewed; không phải hệ thống chứng nhận test độc lập xuyên thiết bị.
 
 Theo yêu cầu xóa route không còn dùng, đã xóa bốn file trong `src/auth/` (controller, service, module, README) và `src/common/roles.guard.ts` không có nơi sử dụng. Các route guest/session và bản đăng nhập token cũ không còn nằm trong source hoặc bản build mới. `LoginModule` với cookie `hq3d.sid` là luồng xác thực đang dùng. Số endpoint hoạt động vẫn là **27**, vì AuthModule cũ vốn không được AppModule đăng ký.
 
