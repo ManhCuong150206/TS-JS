@@ -77,8 +77,8 @@ export class UsersService {
     return updated;
   }
 
-  // Mongo standalone không có transaction. Xếp hàng các thao tác admin trong một
-  // tiến trình để hai admin không đồng thời tự hạ quyền rồi bỏ hệ thống không có admin.
+  // Mongo standalone không có transaction. Tuần tự hóa việc tự xóa tài khoản
+  // trong một tiến trình để không xóa đồng thời mọi admin đang hoạt động.
   private async serializeMutation<T>(action: () => Promise<T>): Promise<T> {
     const previous = this.mutationQueue;
     let release!: () => void;

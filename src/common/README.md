@@ -28,13 +28,13 @@ Các POST/PATCH/PUT/DELETE đều cần `X-Requested-With: XMLHttpRequest`, kể
 
 Không cần token Authorization để gọi API phiên hiện tại. Cookie `hq3d.sid` có `HttpOnly`, `SameSite=Lax`, path `/`, maxAge 7 ngày; Mongo store dùng collection `sessions` với TTL 7 ngày. Store không lưu phiên chưa khởi tạo (`saveUninitialized: false`) và không tự resave phiên không đổi. HTTPS cần thiết khi cookie Secure bật; với reverse proxy phải cấu hình phù hợp để Express nhận biết kết nối.
 
-## AuthGuard, CurrentUser và RolesGuard
+## AuthGuard và CurrentUser
 
 AuthGuard bỏ qua handler/class có metadata `Public`. Các route còn lại cần `req.session.userId` hợp lệ, tài khoản tồn tại/active và `sessionVersion` khớp. Nếu không, guard hủy session, xóa cookie và trả 401 `Vui lòng đăng nhập`.
 
 Khi hợp lệ, guard gắn `req.user = { userId, role, account }`. Decorator `CurrentUser` đưa đối tượng này vào tham số controller. Nó không đọc user ID tùy ý từ header/body.
 
-`Roles(...roles)` gắn metadata; `RolesGuard` trả 403 nếu role không nằm trong danh sách. RolesGuard không được tự đăng ký toàn cục trong file này; route muốn dùng cần gắn guard. Bộ lọc owner/admin ở service là cơ chế riêng, không được thay thế chỉ bằng decorator role.
+Quyền truy cập tài nguyên được kiểm tra bằng bộ lọc owner/admin ở Service. Guard role cũ không được dùng đã được xóa.
 
 ## Quyền sở hữu và trường được phép ghi
 
@@ -85,7 +85,6 @@ Ví dụ `x,y` cùng các dòng `1,3` và `2,5` tạo rowCount 2, hai cột numb
 | `database.config.ts` | Chọn URI, bảo vệ DB test |
 | `session.config.ts` | Cookie/store, lưu/hủy phiên |
 | `auth.guard.ts` | Xác thực toàn cục, Public, CurrentUser, RequestUser |
-| `roles.guard.ts` | Metadata role và guard kiểm tra role |
 | `ownership.ts` | Owner, ID và allowlist payload |
 | `pagination.ts` | Kiểm tra tham số phân trang |
 | `csv-validator.ts` | Parse CSV và tạo metadata |

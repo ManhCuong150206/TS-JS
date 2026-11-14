@@ -6,7 +6,7 @@
 
 `LoginModule` là module xác thực **đang được AppModule nạp**. Nó tạo tài khoản, kiểm tra mật khẩu, tạo/hủy phiên đăng nhập và cung cấp thông tin người dùng hiện tại. Tên thư mục là `login`, nhưng đường dẫn HTTP là `/api/v1/auth`.
 
-Module không sử dụng JWT. Trình duyệt giữ cookie `hq3d.sid`; server giữ dữ liệu phiên và tra lại tài khoản ở mỗi request cần đăng nhập. Thư mục `src/auth` là một triển khai cũ, không phải API đang chạy.
+Module không sử dụng JWT. Trình duyệt giữ cookie `hq3d.sid`; server giữ dữ liệu phiên và tra lại tài khoản ở mỗi request cần đăng nhập. Triển khai xác thực cũ đã được xóa; LoginModule là luồng xác thực duy nhất trong mã nguồn.
 
 ## API
 

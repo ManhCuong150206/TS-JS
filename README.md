@@ -7,9 +7,15 @@ Web app trực quan hóa quá trình học của mô hình hồi quy trong khôn
 - **Frontend:** Angular + Three.js; hỗ trợ PWA và IndexedDB
 - **Triển khai:** Docker Compose + Nginx + HTTPS
 
+## Báo cáo và đặc tả API
+
+- [Báo cáo API dùng cho tiểu luận](docs/BAO-CAO-API-TIEU-LUAN.md): kiến trúc, chức năng, 27 endpoint, dữ liệu vào/ra, phân quyền và sơ đồ xử lý theo mã nguồn ngày 14/11/2026.
+- [API Handbook](docs/API-HANDBOOK.md): hợp đồng tích hợp và giới hạn hiện tại.
+- [Ghi chú kiểm chứng](docs/KIEM-CHUNG-BAO-CAO-API.md): phạm vi rà soát và kết quả kiểm thử thực tế.
+
 ## Tài liệu từng module backend
 
-Bắt đầu ở [mục lục backend](src/README.md) để hiểu luồng ứng dụng và chọn module cần đọc. Tài liệu chi tiết: [Login](src/login/README.md), [Users](src/users/README.md), [Datasets](src/datasets/README.md), [Experiments](src/experiments/README.md), [Training runs](src/training-runs/README.md), [Sync](src/sync/README.md), [Common](src/common/README.md). [Auth cũ](src/auth/README.md) được ghi rõ là không được nạp vào ứng dụng hiện tại.
+Bắt đầu ở [mục lục backend](src/README.md) để hiểu luồng ứng dụng và chọn module cần đọc. Tài liệu chi tiết: [Login](src/login/README.md), [Users](src/users/README.md), [Datasets](src/datasets/README.md), [Experiments](src/experiments/README.md), [Training runs](src/training-runs/README.md), [Sync](src/sync/README.md), [Common](src/common/README.md).
 
 ## Chạy toàn hệ thống bằng Docker
 
@@ -344,8 +350,8 @@ nest g controller ten-module
 
 - FE gọi `/api/v1` cùng origin. Angular dev proxy chuyển yêu cầu đến NestJS tại `127.0.0.1:3000`. Khi chạy Docker, Nginx chuyển tiếp các yêu cầu này qua mạng nội bộ.
 - Đăng ký và đăng nhập dùng `POST /auth/register` và `POST /auth/login`. Khôi phục phiên dùng `GET /auth/me`, đăng xuất dùng `POST /auth/logout`. Backend băm mật khẩu bằng bcrypt và lưu phiên trong MongoDB. Trình duyệt giữ cookie `HttpOnly`, có cờ `Secure` khi chạy production. Guest dùng dữ liệu trong bộ nhớ trình duyệt.
-- FE gửi thí nghiệm qua `POST /sync/batch` và đọc thay đổi qua `GET /sync/changes`. Mỗi thao tác có khóa để thử lại an toàn. Backend kiểm tra quyền của chủ dữ liệu và trả kết quả từng thao tác, gồm cả trường hợp xung đột.
-- FE giới hạn mỗi lô ở 50 thao tác và 8 MiB. Backend nhận JSON tối đa 10 MiB. CSV được xử lý trong trình duyệt. Nếu người dùng lưu và đồng bộ thí nghiệm, bản lưu có thể chứa dữ liệu CSV đã xử lý.
+- FE gửi thí nghiệm qua `POST /experiments/bulk` khi người dùng chọn đồng bộ. Backend kiểm tra quyền sở hữu và phiên bản, xác nhận từng bản ghi; `GET /experiments/:id` lấy bản server khi xung đột. Nhóm `/sync/*` là API đồng bộ tổng quát riêng, chưa được FE gọi trong luồng này.
+- FE giới hạn mỗi bản lưu ở 8 MiB, chia lô tối đa 100 mục và body 10 MiB. Backend nhận JSON tối đa 10 MiB. CSV được xử lý trong trình duyệt. Nếu người dùng lưu và đồng bộ thí nghiệm, bản lưu có thể chứa dữ liệu CSV đã xử lý.
 
 `npm test` chạy unit test. `npm run test:e2e` chạy API với MongoDB tạm có tên `hoi-quy-3d-test`. Để thử giao diện với API riêng, build backend rồi chạy `node test/run-browser-backend.mjs`. Helper dùng MongoDB và thư mục upload tạm, nghe mặc định trên `127.0.0.1:3001`. Trỏ dev proxy của FE tới cổng này và dùng Ctrl+C để dừng helper.
 

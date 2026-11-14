@@ -5,6 +5,8 @@ Cookie `hq3d.sid` chứa session ID đã ký; dữ liệu phiên ở MongoDB, kh
 Mật khẩu được băm bằng bcrypt với cost 12.
 Cookie HttpOnly, SameSite=Lax, thời hạn 7 ngày. FE không đọc cookie và không lưu token.
 
+> Cập nhật sau khi dọn route cũ ngày 14/11/2026. Hợp đồng hiện tại theo LoginController và UsersController.
+
 ## Endpoint
 
 `User` = `{ _id, email, displayName, role, status, createdAt, updatedAt }`.
@@ -18,22 +20,17 @@ Tất cả đường dẫn dưới đây được ghép với base URL.
 | POST   | /auth/logout       | Không                         | 200 {success:true}, xóa cookie          | Đã đăng nhập | 401,403         |
 | GET    | /auth/me           | Không                         | 200 User                                | Đã đăng nhập | 401             |
 | GET    | /users/me          | Không                         | 200 User                                | Đã đăng nhập | 401             |
-| PATCH  | /users/me          | {displayName}                 | 200 User                                | Chính mình   | 400,401,403     |
-| PATCH  | /users/me/password | {currentPassword,newPassword} | 200 User                                | Chính mình   | 400,401,403     |
+| POST   | /users/me          | {displayName}                 | 200 User                                | Chính mình   | 400,401,403     |
+| POST   | /users/me/password | {currentPassword,newPassword} | 200 User                                | Chính mình   | 400,401,403     |
 | DELETE | /users/me          | {password}                    | 200 {success:true}, xóa cookie          | Chính mình   | 400,401,403     |
-| GET    | /users             | ?page=1&limit=20&search=...   | 200 {items,total,page,limit,totalPages} | Admin        | 400,401,403     |
-| GET    | /users/:id         | Không                         | 200 User                                | Admin        | 401,403,404     |
-| PATCH  | /users/:id         | {displayName?,role?,status?}  | 200 User                                | Admin        | 400,401,403,404 |
-| DELETE | /users/:id         | Không                         | 200 {success:true}                      | Admin        | 400,401,403,404 |
 
 - Email trim + lowercase; mật khẩu tối thiểu 8 ký tự, tối đa 72 byte UTF-8; displayName sau trim dài 1–120.
 - Register bỏ qua riêng `role` và `ownerId`; các trường lạ khác trả 400. Register **không tự đăng nhập**.
 - Login/register giới hạn mỗi endpoint 5 request/phút/IP, tính cả request thành công.
 - `role`: `user | admin`; `status`: `active | disabled`. Email không sửa qua API này.
-- `page >= 1`, `1 <= limit <= 100`; search tìm chuỗi trong email/displayName, không phân biệt hoa thường.
-- Đổi mật khẩu giữ session đang gọi và vô hiệu hóa session khác. Đổi role/status vô hiệu hóa mọi session của user bị đổi, kể cả admin tự đổi.
+- Đổi mật khẩu giữ session đang gọi và vô hiệu hóa session khác. Controller không công bố API đổi role/status của tài khoản khác.
 - Xóa user: khóa và tăng version, xóa mềm datasets/experiments/trainingRuns rồi xóa thật user. Tệp CSV vẫn được giữ trên ổ đĩa nhưng không tải được qua API.
-- Admin active cuối cùng không được xóa/khóa/hạ quyền, trả 400. Admin có thể quản lý dữ liệu mọi user.
+- Admin active cuối cùng không được tự xóa, trả 400. Admin có quyền trên tài nguyên dữ liệu mọi user; không có route quản trị tài khoản khác.
 - GET / và GET /health công khai. Mọi API khác cần session; header x-user-id/Bearer không cấp quyền.
 - Dữ liệu không thuộc user trả 404. ownerId trong payload bị bỏ qua; cập nhật bằng admin vẫn giữ chủ sở hữu đã lưu.
 - Sync/batch giữ response cũ: từng operation bị từ chối nằm trong `results[].status = "error"`, không trả snapshot người khác. HTTP 401 là phiên hết hiệu lực của cả batch. Sync/changes có tombstone `deletedAt` để FE xóa bản sao offline.
@@ -88,7 +85,7 @@ Hàng đợi sync offline phải dùng HttpClient có interceptor, dừng retry 
 sau khi xác nhận đúng user đăng nhập lại. Phân vùng dữ liệu offline theo userId để không
 đẩy hàng đợi của tài khoản cũ sang tài khoản mới.
 
-FE gọi URL tuyệt đối nên Angular không tự gắn XSRF header. Interceptor trên là bắt buộc.
+Khi dùng HttpClient với URL tuyệt đối, cần tự gắn header ghi như ví dụ. FE hiện dùng fetch trong AuthSession và tự gắn header tương ứng.
 Không đặt Content-Type thủ công khi upload FormData; browser tự thêm multipart boundary.
 Không cần gửi Authorization. FE không tự thêm `Cookie`; browser quản lý.
 

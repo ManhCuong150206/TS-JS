@@ -234,12 +234,12 @@ describe('Session auth and data permissions', () => {
       .send({ email: 'bytes@example.com', password: unicodePassword })
       .expect(200);
     await agent
-      .patch(prefix + '/users/me/password')
+      .post(prefix + '/users/me/password')
       .set(header)
       .send({ currentPassword: unicodePassword, newPassword: 'é'.repeat(37) })
       .expect(400);
     await agent
-      .patch(prefix + '/users/me/password')
+      .post(prefix + '/users/me/password')
       .set(header)
       .send({ currentPassword: unicodePassword, newPassword: 'a'.repeat(72) })
       .expect(200);
@@ -487,63 +487,72 @@ describe('Session auth and data permissions', () => {
 });
 
 describe('Account management and audit', () => {
-  it('edits own profile, validates fields, and protects admin endpoints', async () => {
-    const { a, alice, admin } = await actors();
+  it('edits own profile without changing role or exposing password data', async () => {
+    const { alice } = await actors();
     await alice.get(prefix + '/users/me').expect(200);
-    expect(
-      (
-        await alice
-          .patch(prefix + '/users/me')
-          .set(header)
-          .send({ displayName: '  Alice  ' })
-          .expect(200)
-      ).body.displayName,
-    ).toBe('Alice');
-    await alice
-      .patch(prefix + '/users/me')
+    const updated = await alice
+      .post(prefix + '/users/me')
       .set(header)
-      .send({ role: 'admin' })
-      .expect(400);
-    await alice.get(prefix + '/users').expect(403);
-    await alice.get(prefix + '/users/' + a._id).expect(403);
-    await alice
-      .patch(prefix + '/users/' + a._id)
-      .set(header)
-      .send({ role: 'admin' })
-      .expect(403);
-    await alice
-      .delete(prefix + '/users/' + a._id)
-      .set(header)
-      .expect(403);
-    const list = await admin
-      .get(prefix + '/users?page=1&limit=1&search=alice')
+      .send({ displayName: '  Alice  ' })
       .expect(200);
-    expect(list.body).toMatchObject({
-      total: 1,
-      page: 1,
-      limit: 1,
-      totalPages: 1,
-    });
-    expect(list.body.items[0]._id).toBe(a._id);
-    expect(JSON.stringify(list.body)).not.toContain('passwordHash');
-    await admin.get(prefix + '/users?limit=101').expect(400);
-    await admin.get(prefix + '/users?page=0').expect(400);
-    await admin.get(prefix + '/users/not-an-id').expect(404);
-    await admin
-      .patch(prefix + '/users/' + a._id)
+    expect(updated.body.displayName).toBe('Alice');
+    expect(updated.body.role).toBe('user');
+    expect(updated.body.passwordHash).toBeUndefined();
+    expect(updated.body.sessionVersion).toBeUndefined();
+    await alice
+      .post(prefix + '/users/me')
       .set(header)
-      .send({ role: null })
+      .send({ role: 'admin' })
+      .expect(400);
+    await alice
+      .post(prefix + '/users/me')
+      .set(header)
+      .send({ displayName: '   ' })
       .expect(400);
     expect(
-      (await admin.get(prefix + '/users?search=%2E%2A').expect(200)).body.total,
-    ).toBe(0);
+      (await alice.get(prefix + '/users/me').expect(200)).body.displayName,
+    ).toBe('Alice');
+  });
+  it('does not expose removed auth or admin user routes', async () => {
+    const { a, alice, admin } = await actors();
+    for (const agent of [alice, admin]) {
+      await agent.get(prefix + '/auth/session').expect(404);
+      await agent
+        .post(prefix + '/auth/guest')
+        .set(header)
+        .expect(404);
+      await agent.get(prefix + '/users').expect(404);
+      await agent.get(prefix + '/users/' + a._id).expect(404);
+      await agent
+        .patch(prefix + '/users/' + a._id)
+        .set(header)
+        .send({ role: 'admin' })
+        .expect(404);
+      await agent
+        .delete(prefix + '/users/' + a._id)
+        .set(header)
+        .expect(404);
+      await agent
+        .patch(prefix + '/users/me')
+        .set(header)
+        .send({ displayName: 'Old route' })
+        .expect(404);
+      await agent
+        .patch(prefix + '/users/me/password')
+        .set(header)
+        .send({ currentPassword: password, newPassword: 'new-password-123' })
+        .expect(404);
+    }
+    expect((await alice.get(prefix + '/users/me').expect(200)).body.role).toBe(
+      'user',
+    );
   });
   it('changes password, keeps this session, revokes another session and old password', async () => {
     await register('a@example.com');
     const first = await login('a@example.com');
     const second = await login('a@example.com');
     await first
-      .patch(prefix + '/users/me/password')
+      .post(prefix + '/users/me/password')
       .set(header)
       .send({
         currentPassword: 'wrong-password',
@@ -551,7 +560,7 @@ describe('Account management and audit', () => {
       })
       .expect(401);
     const changed = await first
-      .patch(prefix + '/users/me/password')
+      .post(prefix + '/users/me/password')
       .set(header)
       .send({ currentPassword: password, newPassword: 'new-password-123' })
       .expect(200);
@@ -568,36 +577,6 @@ describe('Account management and audit', () => {
       .set(header)
       .send({ email: 'a@example.com', password: 'new-password-123' })
       .expect(200);
-  });
-  it('admin role/status changes revoke sessions; admin deletion revokes and soft deletes data', async () => {
-    const { a, b, alice, bob, admin } = await actors();
-    const data = await dataset(bob);
-    await admin
-      .patch(prefix + '/users/' + a._id)
-      .set(header)
-      .send({ role: 'admin' })
-      .expect(200);
-    await alice.get(prefix + '/auth/me').expect(401);
-    const promoted = await login('a@example.com');
-    await promoted.get(prefix + '/users').expect(200);
-    await admin
-      .patch(prefix + '/users/' + a._id)
-      .set(header)
-      .send({ status: 'disabled' })
-      .expect(200);
-    await promoted.get(prefix + '/auth/me').expect(401);
-    await admin
-      .delete(prefix + '/users/' + b._id.toUpperCase())
-      .set(header)
-      .expect(200);
-    await bob.get(prefix + '/auth/me').expect(401);
-    expect(
-      await db.collection('users').findOne({ email: 'b@example.com' }),
-    ).toBeNull();
-    expect(
-      (await db.collection('datasets').findOne({ clientId: data.clientId }))
-        ?.deletedAt,
-    ).toBeInstanceOf(Date);
   });
   it('requires password to delete self and soft deletes all three data types', async () => {
     const { b, alice, bob } = await actors();
@@ -643,54 +622,14 @@ describe('Account management and audit', () => {
     }
     await alice.get(prefix + '/auth/me').expect(200);
   });
-  it('protects last active admin through self and admin routes', async () => {
+  it('protects the last active admin from self-deletion', async () => {
     const admin = await login('admin@example.com');
-    const me = await admin.get(prefix + '/users/me').expect(200);
-    const id = String(me.body._id);
     await admin
       .delete(prefix + '/users/me')
       .set(header)
       .send({ password })
       .expect(400);
-    await admin
-      .delete(prefix + '/users/' + id)
-      .set(header)
-      .expect(400);
-    await admin
-      .patch(prefix + '/users/' + id)
-      .set(header)
-      .send({ role: 'user' })
-      .expect(400);
-    await admin
-      .patch(prefix + '/users/' + id)
-      .set(header)
-      .send({ status: 'disabled' })
-      .expect(400);
     await admin.get(prefix + '/auth/me').expect(200);
-  });
-  it('serializes simultaneous admin demotions so one active admin remains', async () => {
-    const { a, alice, admin } = await actors();
-    const root = await admin.get(prefix + '/users/me').expect(200);
-    await admin
-      .patch(prefix + '/users/' + a._id)
-      .set(header)
-      .send({ role: 'admin' })
-      .expect(200);
-    await alice.get(prefix + '/auth/me').expect(401);
-    const promoted = await login('a@example.com');
-    const responses = await Promise.all([
-      admin
-        .patch(prefix + '/users/' + String(root.body._id))
-        .set(header)
-        .send({ role: 'user' }),
-      promoted
-        .patch(prefix + '/users/' + a._id)
-        .set(header)
-        .send({ role: 'user' }),
-    ]);
-    expect(
-      responses.map((response) => response.status).sort((a, b) => a - b),
-    ).toEqual([200, 400]);
     expect(
       await db
         .collection('users')
@@ -708,7 +647,7 @@ describe('Account management and audit', () => {
       .expect(401);
     const user = await login('audit@example.com');
     await user
-      .patch(prefix + '/users/me/password')
+      .post(prefix + '/users/me/password')
       .set(header)
       .send({ currentPassword: password, newPassword: 'audit-new-password' })
       .expect(200);
@@ -716,15 +655,16 @@ describe('Account management and audit', () => {
       .post(prefix + '/auth/logout')
       .set(header)
       .expect(200);
-    const admin = await login('admin@example.com');
-    await admin
-      .patch(prefix + '/users/' + account._id)
+    const returning = request.agent(server);
+    await returning
+      .post(prefix + '/auth/login')
       .set(header)
-      .send({ role: 'admin', status: 'disabled' })
+      .send({ email: 'audit@example.com', password: 'audit-new-password' })
       .expect(200);
-    await admin
-      .delete(prefix + '/users/' + account._id)
+    await returning
+      .delete(prefix + '/users/me')
       .set(header)
+      .send({ password: 'audit-new-password' })
       .expect(200);
     const logs = await db.collection('auditLogs').find().toArray();
     expect(logs.map((log) => log.action)).toEqual(
@@ -734,8 +674,6 @@ describe('Account management and audit', () => {
         'login.failure',
         'logout',
         'password.change',
-        'user.role.change',
-        'user.status.change',
         'account.delete',
       ]),
     );
@@ -746,6 +684,15 @@ describe('Account management and audit', () => {
       expect(log.ip).toBeTruthy();
       expect(log.at).toBeInstanceOf(Date);
     }
+    expect(logs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'account.delete',
+          userId: account._id,
+          targetId: account._id,
+        }),
+      ]),
+    );
     const serialized = JSON.stringify(logs);
     for (const secret of [
       password,
@@ -1093,14 +1040,28 @@ describe('CSV upload and saved account history', () => {
     const user = await login('pagination@example.com');
     const row = { id: 'not-written', name: 'Valid row', algorithm: 'linear' };
 
-    await user.post(prefix + '/experiments/bulk').set(header).send({ experiments: [row] }).expect(400);
-    await user.post(prefix + '/experiments/bulk').set(header).send([row, null]).expect(400);
-    await user.post(prefix + '/experiments/bulk').set(header).send([row, row]).expect(400);
+    await user
+      .post(prefix + '/experiments/bulk')
+      .set(header)
+      .send({ experiments: [row] })
+      .expect(400);
+    await user
+      .post(prefix + '/experiments/bulk')
+      .set(header)
+      .send([row, null])
+      .expect(400);
+    await user
+      .post(prefix + '/experiments/bulk')
+      .set(header)
+      .send([row, row])
+      .expect(400);
     await user.get(prefix + '/experiments/not-written').expect(404);
     for (const path of ['/experiments', '/datasets', '/training-runs']) {
       await user.get(prefix + path + '?page=2abc').expect(400);
       await user.get(prefix + path + '?limit=101').expect(400);
-      const result = await user.get(prefix + path + '?page=2&limit=10').expect(200);
+      const result = await user
+        .get(prefix + path + '?page=2&limit=10')
+        .expect(200);
       expect(result.body).toMatchObject({ page: 2, limit: 10 });
     }
   });
@@ -1108,11 +1069,30 @@ describe('CSV upload and saved account history', () => {
   it('acknowledges a replay after a lost response, rejects stale writes and reports partial success', async () => {
     await register('replay@example.com');
     const user = await login('replay@example.com');
-    const bulk = (rows: object[]) => user.post(prefix + '/experiments/bulk').set(header).send(rows);
-    const first = { id: 'shared', name: 'Original', algorithm: 'linear', lastMutationId: 'save-1', expectedVersion: 0 };
-    const second = { ...first, name: 'Updated', lastMutationId: 'save-2', expectedVersion: 1 };
+    const bulk = (rows: object[]) =>
+      user
+        .post(prefix + '/experiments/bulk')
+        .set(header)
+        .send(rows);
+    const first = {
+      id: 'shared',
+      name: 'Original',
+      algorithm: 'linear',
+      lastMutationId: 'save-1',
+      expectedVersion: 0,
+    };
+    const second = {
+      ...first,
+      name: 'Updated',
+      lastMutationId: 'save-2',
+      expectedVersion: 1,
+    };
     const stale = { ...second, name: 'Stale', lastMutationId: 'other-device' };
-    const independent = { ...first, id: 'another', lastMutationId: 'save-other' };
+    const independent = {
+      ...first,
+      id: 'another',
+      lastMutationId: 'save-other',
+    };
 
     await bulk([first]).expect(200);
     const replay = await bulk([first]).expect(200);
@@ -1132,5 +1112,4 @@ describe('CSV upload and saved account history', () => {
     const repeated = await bulk([independent]).expect(200);
     expect(repeated.body.items).toEqual(partial.body.items);
   });
-
 });

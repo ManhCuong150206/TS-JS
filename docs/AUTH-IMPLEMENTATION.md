@@ -1,5 +1,7 @@
 # Báo cáo triển khai xác thực
 
+> Tài liệu lịch sử của lần triển khai trước. Ngày 14/11/2026 đã xóa mã auth cũ và guard role không dùng, bỏ test quản trị cũ, cập nhật test hồ sơ/mật khẩu sang POST. Các mô tả admin route và kết quả test bên dưới là lịch sử; hợp đồng và kiểm chứng hiện tại xem [AUTH-API](AUTH-API.md) và [Ghi chú kiểm chứng](KIEM-CHUNG-BAO-CAO-API.md).
+
 ## Phạm vi
 
 Đã thêm session server-side, bcrypt (cost 12), auth guard toàn cục, quyền dữ liệu, CSRF/CORS,

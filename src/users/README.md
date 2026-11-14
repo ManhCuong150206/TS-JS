@@ -90,4 +90,4 @@ Các bước không nằm trong MongoDB transaction. Nếu DB lỗi giữa chừ
 | 403 | Header hoặc Origin không hợp lệ |
 | 404 | Route không tồn tại; hàm service tìm ID cũng trả 404 nếu không thấy user |
 
-Các tình huống cần kiểm tra khi thay đổi module: tên rỗng sau trim, mật khẩu Unicode quá 72 byte, đổi mật khẩu giữ phiên hiện tại nhưng chặn phiên khác, xác nhận mật khẩu trước xóa, xóa mềm cả ba nhóm dữ liệu, bảo vệ admin cuối. Bộ kiểm thử nằm trong `test/app.e2e-spec.ts`, chạy từ gốc bằng `npm run test:e2e`; một số test quản trị cũ đang nhắm tới route không còn trong controller.
+Các tình huống cần kiểm tra khi thay đổi module: tên rỗng sau trim, mật khẩu Unicode quá 72 byte, đổi mật khẩu giữ phiên hiện tại nhưng chặn phiên khác, xác nhận mật khẩu trước xóa, xóa mềm cả ba nhóm dữ liệu, bảo vệ admin cuối. Bộ kiểm thử nằm trong `test/app.e2e-spec.ts`, chạy từ gốc bằng `npm run test:e2e`; các test cập nhật dùng POST theo controller và kiểm tra route cũ không còn khả dụng.

@@ -15,7 +15,6 @@ Các README bên dưới mô tả mục đích, hợp đồng dữ liệu và h�
 | [Training runs](training-runs/README.md) | Đang nạp | Lưu các lần huấn luyện, metrics, tham số và lịch sử loss |
 | [Sync](sync/README.md) | Đang nạp | Batch offline, retry, xung đột phiên bản và pull thay đổi |
 | [Common](common/README.md) | Thư viện dùng chung | HTTP/CORS, phiên, guard, quyền sở hữu, phân trang và CSV |
-| [Auth cũ](auth/README.md) | Không được AppModule nạp | Triển khai token/guest cũ; không dùng làm hợp đồng API hiện tại |
 
 Đã rà soát toàn bộ file `*.module.ts` trong `src`: AppModule được giải thích ngay trong tài liệu này; các module còn lại đều có README tại thư mục tương ứng. Common không phải Nest module nhưng có tài liệu riêng vì nhiều module phụ thuộc vào nó. Thư mục DTO/schema của module được giải thích trong README module; riêng experiments còn có [tài liệu DTO](experiments/dto/README.md) và [tài liệu schema](experiments/schemas/README.md) sẵn có.
 
