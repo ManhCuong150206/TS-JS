@@ -7,6 +7,10 @@ Web app trực quan hóa quá trình học của mô hình hồi quy trong khôn
 - **Frontend:** Angular + Three.js; hỗ trợ PWA và IndexedDB
 - **Triển khai:** Docker Compose + Nginx + HTTPS
 
+## Tài liệu từng module backend
+
+Bắt đầu ở [mục lục backend](src/README.md) để hiểu luồng ứng dụng và chọn module cần đọc. Tài liệu chi tiết: [Login](src/login/README.md), [Users](src/users/README.md), [Datasets](src/datasets/README.md), [Experiments](src/experiments/README.md), [Training runs](src/training-runs/README.md), [Sync](src/sync/README.md), [Common](src/common/README.md). [Auth cũ](src/auth/README.md) được ghi rõ là không được nạp vào ứng dụng hiện tại.
+
 ## Chạy toàn hệ thống bằng Docker
 
 Cần cài Docker Desktop và bật Docker Engine. Tạo file cấu hình Docker riêng để giữ nguyên `.env` đang dùng cho backend local:

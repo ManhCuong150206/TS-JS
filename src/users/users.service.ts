@@ -1,4 +1,3 @@
-import { pagination } from '../common/pagination.js';
 import {
   Injectable,
   Inject,
@@ -15,11 +14,7 @@ import { Dataset } from '../datasets/schemas/dataset.schema.js';
 import { Experiment } from '../experiments/schemas/experiment.schema.js';
 import { TrainingRun } from '../training-runs/schemas/training-run.schema.js';
 import type { RequestUser } from '../common/auth.guard.js';
-import type {
-  AdminUpdateUserDto,
-  ChangePasswordDto,
-  ListUsersDto,
-} from './users.dto.js';
+import type { ChangePasswordDto } from './users.dto.js';
 
 @Injectable()
 export class UsersService {
@@ -39,35 +34,6 @@ export class UsersService {
     const user = await this.users.findById(id);
     if (!user) throw new NotFoundException('Không tìm thấy user');
     return user;
-  }
-  async list(query: ListUsersDto) {
-    const { search } = query;
-    const { page, limit } = pagination(query.page, query.limit);
-    // Escape regex để search được coi là văn bản, không phải biểu thức do client chạy.
-    const escaped = search?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const filter = escaped
-      ? {
-          $or: [
-            { email: { $regex: escaped, $options: 'i' } },
-            { displayName: { $regex: escaped, $options: 'i' } },
-          ],
-        }
-      : {};
-    const [items, total] = await Promise.all([
-      this.users
-        .find(filter)
-        .sort({ createdAt: -1, _id: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      this.users.countDocuments(filter),
-    ]);
-    return {
-      items: items.map(publicUser),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
   }
   async updateProfile(user: RequestUser, displayName: string) {
     const updated = await this.users.findOneAndUpdate(
@@ -138,43 +104,6 @@ export class UsersService {
         'Không thể xóa, khóa hoặc hạ quyền admin cuối cùng',
       );
     }
-  }
-  async adminUpdate(
-    id: string,
-    dto: AdminUpdateUserDto,
-    actor: RequestUser,
-    ip: string,
-  ) {
-    return this.serializeMutation(async () => {
-      const user = await this.findOne(id);
-      await this.protectLastAdmin(
-        user,
-        dto.role === 'user' || dto.status === 'disabled',
-      );
-      const roleChanged = dto.role !== undefined && dto.role !== user.role;
-      const statusChanged =
-        dto.status !== undefined && dto.status !== user.status;
-      const changes: Record<string, string> = {};
-      if (dto.displayName !== undefined) changes.displayName = dto.displayName;
-      if (dto.role !== undefined) changes.role = dto.role;
-      if (dto.status !== undefined) changes.status = dto.status;
-      const updated = await this.users.findByIdAndUpdate(
-        user._id,
-        {
-          $set: changes,
-          ...(roleChanged || statusChanged
-            ? { $inc: { sessionVersion: 1 } }
-            : {}),
-        },
-        { returnDocument: 'after', runValidators: true },
-      );
-      if (!updated) throw new NotFoundException('Không tìm thấy user');
-      if (roleChanged)
-        await this.audit.record('user.role.change', actor.userId, id, ip);
-      if (statusChanged)
-        await this.audit.record('user.status.change', actor.userId, id, ip);
-      return publicUser(updated);
-    });
   }
   async deleteAccount(id: string, actor: RequestUser, ip: string) {
     return this.serializeMutation(async () => {
