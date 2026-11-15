@@ -411,12 +411,12 @@ Sau khi biên soạn, mã xác thực cũ và guard role không dùng đã đư�
 
 | Nội dung | Căn cứ |
 | --- | --- |
-| Module, tiền tố | src/app.module.ts, src/main.ts, src/common/configure-app.ts |
+| Module, tiền tố | src/app.module.ts, src/main.ts, src/config/configure-app.ts |
 | 27 endpoint và HTTP | AppController cùng sáu controller nghiệp vụ đang nạp |
-| Xác thực, tài khoản | src/login/, src/users/, common/auth.guard.ts, session.config.ts |
-| Dữ liệu và quyền | DTO, schema, Service từng module; common/ownership.ts, pagination.ts |
-| Phiên bản bulk | src/experiments/experiments.service.ts |
-| Sync tổng quát | src/sync/sync.service.ts và dto/sync.dto.ts |
+| Xác thực, tài khoản | src/modules/login/, src/modules/users/, src/common/guards/auth.guard.ts, src/config/session.config.ts |
+| Dữ liệu và quyền | DTO, schema, Service từng module; src/shared/helpers/ownership.ts, src/shared/helpers/pagination.ts |
+| Phiên bản bulk | src/modules/experiments/experiments.service.ts |
+| Sync tổng quát | src/modules/sync/sync.service.ts và src/modules/sync/dto/sync.dto.ts |
 | Luồng FE/payload | FE/FE-hoiquy3d/src/app/state/experiments-store.ts, auth-session.ts, core/models/experiment-payload.ts |
 | Huấn luyện browser | FE/FE-hoiquy3d/src/app/core/engine/regression.worker.ts |
 | API qua HTTPS | deploy/nginx.conf |

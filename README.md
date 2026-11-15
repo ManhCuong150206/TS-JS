@@ -16,7 +16,7 @@ Web app trực quan hóa quá trình học của mô hình hồi quy trong khôn
 
 ## Tài liệu từng module backend
 
-Bắt đầu ở [mục lục backend](src/README.md) để hiểu luồng ứng dụng và chọn module cần đọc. Tài liệu chi tiết: [Login](src/login/README.md), [Users](src/users/README.md), [Datasets](src/datasets/README.md), [Experiments](src/experiments/README.md), [Training runs](src/training-runs/README.md), [Sync](src/sync/README.md), [Common](src/common/README.md).
+Bắt đầu ở [mục lục backend](src/README.md) để hiểu luồng ứng dụng và chọn module cần đọc. Tài liệu chi tiết: [Login](src/modules/login/README.md), [Users](src/modules/users/README.md), [Datasets](src/modules/datasets/README.md), [Experiments](src/modules/experiments/README.md), [Training runs](src/modules/training-runs/README.md), [Sync](src/modules/sync/README.md), [Common](src/common/README.md).
 
 ## Chạy toàn hệ thống bằng Docker
 

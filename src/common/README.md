@@ -81,12 +81,12 @@ Ví dụ `x,y` cùng các dòng `1,3` và `2,5` tạo rowCount 2, hai cột numb
 
 | File | Trách nhiệm |
 |---|---|
-| `configure-app.ts` | Thiết lập HTTP chung, CORS, header ghi, session, JSON limit |
-| `database.config.ts` | Chọn URI, bảo vệ DB test |
-| `session.config.ts` | Cookie/store, lưu/hủy phiên |
-| `auth.guard.ts` | Xác thực toàn cục, Public, CurrentUser, RequestUser |
-| `ownership.ts` | Owner, ID và allowlist payload |
-| `pagination.ts` | Kiểm tra tham số phân trang |
-| `csv-validator.ts` | Parse CSV và tạo metadata |
+| [configure-app.ts](../config/configure-app.ts) | Thiết lập HTTP chung, CORS, header ghi, session, JSON limit |
+| [database.config.ts](../config/database.config.ts) | Chọn URI, bảo vệ DB test |
+| [session.config.ts](../config/session.config.ts) | Cookie/store, lưu/hủy phiên |
+| [auth.guard.ts](guards/auth.guard.ts) | Xác thực toàn cục, Public, CurrentUser, RequestUser |
+| [ownership.ts](../shared/helpers/ownership.ts) | Owner, ID và allowlist payload |
+| [pagination.ts](../shared/helpers/pagination.ts) | Kiểm tra tham số phân trang |
+| [csv-validator.ts](../shared/helpers/csv-validator.ts) | Parse CSV và tạo metadata |
 
-Chạy từ gốc: `npm test -- src/common/session.config.spec.ts src/common/csv-validator.spec.ts`. Các ca HTTP về CORS/header/phiên/quyền/phân trang nằm trong bộ `npm run test:e2e`. Khi API trả 403, kiểm tra Origin và header trước khi kiểm tra logic controller; khi 401, kiểm tra cookie và phiên.
+Chạy từ gốc: `npm test -- src/config/session.config.spec.ts src/shared/helpers/csv-validator.spec.ts`. Các ca HTTP về CORS/header/phiên/quyền/phân trang nằm trong bộ `npm run test:e2e`. Khi API trả 403, kiểm tra Origin và header trước khi kiểm tra logic controller; khi 401, kiểm tra cookie và phiên.

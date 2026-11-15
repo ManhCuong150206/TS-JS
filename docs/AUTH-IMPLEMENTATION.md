@@ -10,16 +10,16 @@ Không sửa frontend, không thêm Redis/Nginx/Docker service, không chạy mi
 
 ## File thêm/sửa
 
-- Thêm `src/common/database.config.ts`, `configure-app.ts`, `session.config.ts`,
-  `ownership.ts`, `roles.guard.ts`, `session.config.spec.ts`; thay `auth.guard.ts`.
-- Hoàn thiện các tệp có sẵn `src/login/login.controller.ts`, `login.module.ts`,
-  `login.service.ts`; thêm `auth.dto.ts`, `user.schema.ts`, `audit.schema.ts`, `audit.service.ts`.
-- Thêm `src/users/users.controller.ts`, `users.module.ts`, `users.service.ts`, `users.dto.ts`.
+- Thêm `src/config/database.config.ts`, `src/config/configure-app.ts`, `src/config/session.config.ts`,
+  `src/shared/helpers/ownership.ts`, `roles.guard.ts`, `src/config/session.config.spec.ts`; thay `src/common/guards/auth.guard.ts`.
+- Hoàn thiện các tệp có sẵn `src/modules/login/login.controller.ts`, `login.module.ts`,
+  `login.service.ts`; thêm `dto/auth.dto.ts`, `schemas/user.schema.ts`, `schemas/audit.schema.ts`, `audit.service.ts`.
+- Thêm `src/modules/users/users.controller.ts`, `users.module.ts`, `users.service.ts`, `dto/users.dto.ts`.
 - Sửa `src/main.ts`, `src/app.module.ts`, `src/app.controller.ts`.
-- Sửa controller/service của `src/datasets`, `src/experiments`, `src/training-runs`, `src/sync`.
-- Sửa `src/experiments/schemas/experiment.schema.ts` để giữ cấu hình rỗng; thêm
-  `deletedAt` và giữ cấu hình rỗng ở `src/training-runs/schemas/training-run.schema.ts`.
-- Cập nhật `src/experiments/experiments.controller.spec.ts`, thay `test/app.e2e-spec.ts`,
+- Sửa controller/service của `src/modules/datasets`, `src/modules/experiments`, `src/modules/training-runs`, `src/modules/sync`.
+- Sửa `src/modules/experiments/schemas/experiment.schema.ts` để giữ cấu hình rỗng; thêm
+  `deletedAt` và giữ cấu hình rỗng ở `src/modules/training-runs/schemas/training-run.schema.ts`.
+- Cập nhật `src/modules/experiments/experiments.controller.spec.ts`, thay `test/app.e2e-spec.ts`,
   chỉnh timeout trong `vitest.config.e2e.ts`.
 - Thêm `scripts/migrate-anonymous.mjs`, `docs/AUTH-API.md`, báo cáo này.
 - Cập nhật `package.json`, `package-lock.json`, `.env.example`.

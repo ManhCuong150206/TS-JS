@@ -8,15 +8,17 @@ Các README bên dưới mô tả mục đích, hợp đồng dữ liệu và h�
 
 | Module | Trạng thái | Nội dung |
 |---|---|---|
-| [Login](login/README.md) | Đang nạp | Đăng ký, đăng nhập, đăng xuất, phiên cookie, tài khoản và audit |
-| [Users](users/README.md) | Đang nạp | Hồ sơ cá nhân, đổi mật khẩu, tự xóa tài khoản và dữ liệu liên quan |
-| [Datasets](datasets/README.md) | Đang nạp | Upload/kiểm tra CSV, metadata, tải file, phân trang và xóa mềm |
-| [Experiments](experiments/README.md) | Đang nạp; đã có README | Cấu hình thí nghiệm, cập nhật, lưu lô snapshot từ frontend |
-| [Training runs](training-runs/README.md) | Đang nạp | Lưu các lần huấn luyện, metrics, tham số và lịch sử loss |
-| [Sync](sync/README.md) | Đang nạp | Batch offline, retry, xung đột phiên bản và pull thay đổi |
-| [Common](common/README.md) | Thư viện dùng chung | HTTP/CORS, phiên, guard, quyền sở hữu, phân trang và CSV |
+| [Login](modules/login/README.md) | Đang nạp | Đăng ký, đăng nhập, đăng xuất, phiên cookie, tài khoản và audit |
+| [Users](modules/users/README.md) | Đang nạp | Hồ sơ cá nhân, đổi mật khẩu, tự xóa tài khoản và dữ liệu liên quan |
+| [Datasets](modules/datasets/README.md) | Đang nạp | Upload/kiểm tra CSV, metadata, tải file, phân trang và xóa mềm |
+| [Experiments](modules/experiments/README.md) | Đang nạp; đã có README | Cấu hình thí nghiệm, cập nhật, lưu lô snapshot từ frontend |
+| [Training runs](modules/training-runs/README.md) | Đang nạp | Lưu các lần huấn luyện, metrics, tham số và lịch sử loss |
+| [Sync](modules/sync/README.md) | Đang nạp | Batch offline, retry, xung đột phiên bản và pull thay đổi |
+| [Common](common/README.md) | Dùng chung | Guard và hướng dẫn các quy ước HTTP, quyền và dữ liệu |
+| [Config](config/README.md) | Dùng chung | HTTP/CORS, MongoDB, phiên và giới hạn upload |
+| [Shared](shared/README.md) | Dùng chung | Quyền sở hữu, phân trang, kiểm tra CSV và cấu hình dữ liệu tổng hợp |
 
-Đã rà soát toàn bộ file `*.module.ts` trong `src`: AppModule được giải thích ngay trong tài liệu này; các module còn lại đều có README tại thư mục tương ứng. Common không phải Nest module nhưng có tài liệu riêng vì nhiều module phụ thuộc vào nó. Thư mục DTO/schema của module được giải thích trong README module; riêng experiments còn có [tài liệu DTO](experiments/dto/README.md) và [tài liệu schema](experiments/schemas/README.md) sẵn có.
+Đã rà soát toàn bộ file `*.module.ts` trong `src`: AppModule được giải thích ngay trong tài liệu này; các module còn lại đều có README tại thư mục tương ứng. Common không phải Nest module nhưng có tài liệu riêng vì nhiều module phụ thuộc vào nó. Thư mục DTO/schema của module được giải thích trong README module; riêng experiments còn có [tài liệu DTO](modules/experiments/dto/README.md) và [tài liệu schema](modules/experiments/schemas/README.md) sẵn có.
 
 Ngoài backend chính, [database/backend](../database/backend/README.md) là bộ model starter độc lập, không phải nơi định nghĩa các API NestJS đang chạy. Tài liệu [triển khai](../deploy/README.md) cũng đã có README riêng.
 
@@ -47,7 +49,7 @@ Mỗi module thường chia thành Controller (HTTP), Service (nghiệp vụ), D
 
 ## Tiền tố và cấu hình
 
-API dùng tiền tố `/api/v1` qua `common/configure-app.ts`. URI MongoDB được đọc từ `MONGODB_URI`, nếu chưa khai báo thì dùng `connection_string`; thiếu cả hai thì không khởi động được. Tạo `.env` cục bộ theo `.env.example`; không đưa mật khẩu hoặc secret lên Git.
+API dùng tiền tố `/api/v1` qua `config/configure-app.ts`. URI MongoDB được đọc từ `MONGODB_URI`, nếu chưa khai báo thì dùng `connection_string`; thiếu cả hai thì không khởi động được. Tạo `.env` cục bộ theo `.env.example`; không đưa mật khẩu hoặc secret lên Git.
 
 Các route nghiệp vụ cần cookie `hq3d.sid`; POST/PATCH/PUT/DELETE cần header `X-Requested-With: XMLHttpRequest`. Origin giao diện phải được cấu hình trong CORS. Xem [Common](common/README.md) để biết biến môi trường, quyền admin/user và giới hạn chung.
 

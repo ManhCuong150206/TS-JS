@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hồi quy 3D — Kiến trúc backend và thiết kế API</title>
+<style>
+:root{color-scheme:light;--paper:#f5f7fb;--ink:#0f1b3d;--muted:#45536d;--blue:#304dc4;--line:#ccd5e6;--wash:#e7edff;--deep:#102449;--white:#f7f9ff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0b1226;color:var(--ink);font:22px/1.36 "Segoe UI",Arial,sans-serif;overflow:hidden}
+h1,h2,h3,p,ul,ol{margin:0}
+h1{font-size:88px;line-height:1;letter-spacing:-3px}
+h2{font-size:47px;line-height:1.12;letter-spacing:-1.2px}
+h3{font-size:24px;line-height:1.23}
+p+p{margin-top:12px}
+a{color:inherit;text-underline-offset:4px}
+button,select{font:inherit}
+code{font: .84em Consolas,monospace;color:#23409e;overflow-wrap:anywhere}
+#stage{position:absolute;top:50%;left:50%;width:1280px;height:720px;transform-origin:center;background:var(--paper)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;gap:24px;padding:48px 62px}
+.slide[hidden]{display:none}
+.slide header{display:grid;gap:10px}
+.eyebrow{color:var(--blue);font-size:17px;font-weight:750;letter-spacing:.09em;text-transform:uppercase}
+.lead{font-size:32px;line-height:1.29;max-width:1010px}
+.caption{color:var(--muted);font-size:19px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+.duo>div{display:grid;gap:13px;min-width:0;border-top:2px solid var(--line);padding-top:15px}
+.duo h3{color:var(--blue)}
+ul,ol{padding-left:1.26em}
+li+li{margin-top:10px}
+.key{border-left:4px solid var(--blue);background:var(--wash);padding:12px 17px}
+.cover,.close{background:var(--deep);color:var(--white);justify-content:center}
+.cover .eyebrow,.close .eyebrow{color:#b9ccff}
+.cover .lead,.close .lead{max-width:890px}
+.agenda{border-top:1px solid #7084ab;padding-top:14px;max-width:920px;color:#d4dff9}
+.close h2{font-size:60px;max-width:1040px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:22px;line-height:1.28}
+th,td{padding:12px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--wash);color:#203789;font-size:18px}
+tbody th{font-weight:700;color:#243e9b;white-space:nowrap}
+.dense{gap:21px}
+.dense table{font-size:20px}
+.dense th,.dense td{padding:10px 12px}
+.flow{list-style:none;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:25px}
+.flow li{position:relative;margin:0;border-top:3px solid var(--blue);padding-top:11px}
+.flow li:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:10px;color:var(--blue)}
+.flow b{display:block;margin-bottom:6px}
+.flow span{font-size:20px;display:block;color:var(--muted)}
+.speaker-note{display:none}
+#notes button{background:#fff;border:1px solid #8291b4;color:var(--ink);border-radius:5px;padding:7px 11px;cursor:pointer}
+:focus-visible{outline:3px solid #3156db;outline-offset:2px}
+#notes{position:absolute;z-index:2;inset:auto 62px 78px;max-height:390px;overflow:auto;padding:20px 25px;background:#fff;border:2px solid var(--blue);box-shadow:0 12px 40px #05102b33;font-size:21px}
+#notes header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#notes pre{font:17px/1.4 Consolas,monospace;white-space:pre-wrap;background:var(--paper);padding:10px 14px;margin:12px 0}
+@page{size:13.333in 7.5in;margin:0}
+@media print{html,body{height:auto;background:white;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#stage{position:static;width:1280px;height:auto;transform:none!important}
+.slide,.slide[hidden]{position:relative;display:flex;height:720px;width:1280px;break-after:page}
+.slide:last-of-type{break-after:auto}
+#notes{display:none!important}}
+</style>
+</head>
+<body>
+<main id="stage">
+<section id="s1" class="slide cover" aria-labelledby="s1-title">
+<header><p class="eyebrow">Backend Hồi quy 3D</p><h1 id="s1-title" tabindex="-1">Kiến trúc và thiết kế API</h1></header>
+<p class="lead">Cách NestJS tổ chức nghiệp vụ, cách thiết kế 27 API và cách MongoDB lưu dữ liệu.</p>
+<p class="agenda">Kiến trúc hệ thống → Mô hình dữ liệu → 8 nguyên tắc API → Đánh giá thiết kế</p>
+<div class="speaker-note"><p>Em trình bày hai quyết định chính của backend. Thứ nhất là cách chia phần xử lý và lưu dữ liệu. Thứ hai là cách thiết kế đường dẫn, phương thức, phản hồi và đồng bộ để phía gọi API biết cách sử dụng.</p>
+<p>Khung 8 nguyên tắc tham khảo hình Top 8 Tips For Restful API Design của ByteByteGo. Phần áp dụng đối chiếu mã TS-JS. Dùng ← / → để chuyển, F để toàn màn hình, N để xem ghi chú.</p></div>
+</section>
+
+<section id="s2" class="slide dense" aria-labelledby="s2-title" hidden>
+<header><p class="eyebrow">Kiến trúc hệ thống</p><h2 id="s2-title" tabindex="-1">Một ứng dụng NestJS, chia theo nghiệp vụ</h2></header>
+<ol class="flow">
+  <li><b>Trình duyệt</b><span>Gửi yêu cầu HTTP tới /api/v1 để đọc, ghi và đồng bộ.</span></li>
+  <li><b>Backend NestJS</b><span>Chạy trên Node.js. AppModule đăng ký các nhóm nghiệp vụ và kết nối lưu trữ.</span></li>
+  <li><b>MongoDB và vùng lưu tệp</b><span>Mongoose đọc, ghi tài liệu MongoDB. Tệp CSV tải lên có vùng lưu riêng trên máy chủ.</span></li>
+</ol><table><thead><tr><th scope="col">Nhóm module</th><th scope="col">Phụ thuộc và trách nhiệm</th></tr></thead><tbody>
+  <tr><th scope="row">Datasets → Experiments</th><td>Experiments dùng Datasets để kiểm tra bộ dữ liệu tham chiếu.</td></tr>
+  <tr><th scope="row">Experiments → TrainingRuns</th><td>TrainingRuns dùng Experiments để gắn bản ghi lần chạy vào thí nghiệm.</td></tr>
+  <tr><th scope="row">Sync</th><td>Import cả ba module để xử lý đồng bộ nhiều loại tài nguyên.</td></tr>
+  <tr><th scope="row">Login, Users, Common</th><td>Quản lý phiên, hồ sơ và các quy tắc dùng chung như quyền truy cập, phân trang.</td></tr>
+</tbody></table><p class="caption">Mũi tên chỉ module cung cấp dữ liệu → module sử dụng. Các module cùng chạy trong một ứng dụng NestJS.</p>
+<div class="speaker-note"><p>Kiến trúc này gọi là modular monolith. Trình duyệt chạy phép tính hồi quy trong Web Worker. BE giữ dữ liệu và kiểm soát việc đọc, ghi theo tài khoản. Các module giao tiếp qua phần được export trong NestJS.</p>
+<p><a href="../src/app.module.ts" target="_blank" rel="noopener">AppModule</a> · <a href="../src/modules/sync/sync.module.ts" target="_blank" rel="noopener">SyncModule</a></p></div>
+</section>
+
+<section id="s3" class="slide dense" aria-labelledby="s3-title" hidden>
+<header><p class="eyebrow">Luồng xử lý HTTP</p><h2 id="s3-title" tabindex="-1">Từ yêu cầu HTTP đến thao tác MongoDB</h2></header>
+<ol class="flow">
+  <li><b>Middleware</b><span>Áp dụng cấu hình HTTP, kiểm tra nguồn web và header của yêu cầu ghi, đọc phiên.</span></li>
+  <li><b>Guard và Controller</b><span>Guard xác định người dùng. Controller ánh xạ phương thức và URL vào hàm xử lý.</span></li>
+  <li><b>Service</b><span>Kiểm tra dữ liệu, chủ sở hữu và các quy tắc tạo, sửa, xóa hoặc đồng bộ.</span></li>
+  <li><b>Mongoose và MongoDB</b><span>Model truy vấn theo schema. NestJS gửi phản hồi HTTP về phía gọi.</span></li>
+</ol><table><thead><tr><th scope="col">Thành phần mã</th><th scope="col">Ví dụ ở nhóm thí nghiệm</th></tr></thead><tbody>
+  <tr><th scope="row"><code>experiments.controller.ts</code></th><td>Nhận đường /experiments và chuyển dữ liệu vào service.</td></tr>
+  <tr><th scope="row"><code>experiments.service.ts</code></th><td>Kiểm tra thuật toán, tham chiếu và phiên bản. Gọi model Mongoose trực tiếp.</td></tr>
+  <tr><th scope="row"><code>experiment.schema.ts</code></th><td>Định nghĩa trường dữ liệu và chỉ mục. Model thao tác trên collection experiments.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>DTO mô tả đầu vào. Các API tài khoản dùng ValidationPipe tại controller. Logic bulk kiểm tra từng mục ở service. Guard xác nhận phiên, service áp điều kiện quyền sở hữu trên bản ghi.</p>
+<p><a href="../src/config/configure-app.ts" target="_blank" rel="noopener">Cấu hình HTTP</a> · <a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Service thí nghiệm</a></p></div>
+</section>
+
+<section id="s4" class="slide dense" aria-labelledby="s4-title" hidden>
+<header><p class="eyebrow">Cơ sở dữ liệu</p><h2 id="s4-title" tabindex="-1">MongoDB lưu từng nhóm tài nguyên</h2></header>
+<table><thead><tr><th scope="col">Collection</th><th scope="col">Dữ liệu được giữ</th></tr></thead><tbody>
+  <tr><th scope="row"><code>datasets</code></th><td>Tên, cột, số dòng và vị trí tệp. CSV upload được lưu riêng trên ổ đĩa máy chủ.</td></tr>
+  <tr><th scope="row"><code>experiments</code></th><td>Thiết lập mô hình, hệ số, chỉ số đánh giá, chủ sở hữu và phiên bản đồng bộ.</td></tr>
+  <tr><th scope="row"><code>trainingRuns</code></th><td>Cấu hình và kết quả từng lần chạy, tham chiếu experimentId.</td></tr>
+  <tr><th scope="row"><code>users và sessions</code></th><td>Tài khoản, mật khẩu đã băm và phiên đăng nhập.</td></tr>
+  <tr><th scope="row"><code>auditLogs và syncOperations</code></th><td>Nhật ký tài khoản và thao tác đồng bộ tổng quát.</td></tr>
+</tbody></table><p class="key">MongoDB cấp _id. API dữ liệu cũng hỗ trợ clientId để tra bản ghi do thiết bị tạo.</p>
+<div class="speaker-note"><p>Dataset có thể được nhiều experiment tham chiếu. Một experiment có thể có nhiều training run. Một số bản lưu bulk tự mang cấu hình dữ liệu hoặc snapshot CSV, nên datasetId là tùy chọn trong luồng đó. Mongoose là thư viện truy cập và ánh xạ schema. MongoDB là cơ sở dữ liệu.</p>
+<p><a href="../src/modules/experiments/schemas/experiment.schema.ts" target="_blank" rel="noopener">Schema thí nghiệm</a></p></div>
+</section>
+
+<section id="api-contract" class="slide dense" aria-labelledby="api-contract-title" hidden>
+<header><p class="eyebrow">Hợp đồng giao tiếp</p><h2 id="api-contract-title" tabindex="-1">API quy định dữ liệu vào và dữ liệu trả về</h2></header>
+<table>
+<thead><tr><th scope="col">Phần của hợp đồng</th><th scope="col">Cách TS-JS thiết kế</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Phương thức và đường dẫn</th><td>Controller đăng ký từng cặp như <code>GET /experiments/:id</code>. NestJS gắn tiền tố <code>/api/v1</code>.</td></tr>
+  <tr><th scope="row">Đầu vào</th><td><code>:id</code> xác định bản ghi. Query điều khiển đọc danh sách. Body JSON mang dữ liệu ghi. Upload CSV nhận tệp trong trường <code>file</code>.</td></tr>
+  <tr><th scope="row">Kiểm tra quyền</th><td>Guard kiểm tra phiên. Service lọc theo <code>ownerId</code> ở các API dữ liệu. Chủ sở hữu được lấy từ tài khoản trên server.</td></tr>
+  <tr><th scope="row">Đầu ra</th><td>Trả tài liệu, trang kết quả, tệp tải xuống hoặc xác nhận từng mục. Mã HTTP và body cho biết yêu cầu được xử lý đến đâu.</td></tr>
+</tbody>
+</table>
+<p class="caption">27 endpoint thuộc 7 nhóm gồm hệ thống, xác thực, hồ sơ, bộ dữ liệu, thí nghiệm, lần chạy và đồng bộ.</p>
+<div class="speaker-note">
+<p>Đặc tả một API phải nói được ai gọi, gọi vào đâu, gửi gì, server kiểm tra gì và phía gọi nhận lại gì. Phần sau phân tích cách các lựa chọn này được áp dụng vào tài nguyên và từng nhóm API của dự án.</p>
+<p><a href="API-HANDBOOK.md" target="_blank" rel="noopener">Hợp đồng API chi tiết</a></p>
+</div>
+</section>
+
+<section id="s5" class="slide dense" aria-labelledby="s5-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 1 và 6 · Tài nguyên và đường dẫn</p><h2 id="s5-title" tabindex="-1">URL đi theo mô hình nghiệp vụ</h2></header>
+<table><thead><tr><th scope="col">Tài nguyên</th><th scope="col">Đường dưới /api/v1</th><th scope="col">Vì sao tổ chức như vậy</th></tr></thead><tbody>
+  <tr><th scope="row">Bộ dữ liệu</th><td><code>/datasets</code> · <code>/datasets/:id</code></td><td>Phân biệt tập hợp bộ dữ liệu và một bản cụ thể.</td></tr>
+  <tr><th scope="row">Thí nghiệm</th><td><code>/experiments</code> · <code>/experiments/:id</code></td><td>Có một địa chỉ cho từng bản để đọc, sửa và xóa.</td></tr>
+  <tr><th scope="row">Lần chạy</th><td><code>/training-runs?experimentId=…</code></td><td>Lần chạy có đường riêng. Dùng query để tìm các lần chạy của một thí nghiệm.</td></tr>
+  <tr><th scope="row">Thao tác đặc thù</th><td><code>/datasets/upload</code> · <code>/experiments/bulk</code></td><td>Đặt tên rõ cho việc upload tệp và xử lý nhiều bản lưu.</td></tr>
+</tbody></table><p class="key">Tên tài nguyên dùng danh từ số nhiều. Đường dẫn chi tiết thêm ID. Query thu hẹp tập kết quả.</p>
+<div class="speaker-note"><p>Nguyên tắc 1 là bắt đầu từ dữ liệu và quan hệ nghiệp vụ. Nguyên tắc 6 là thể hiện chúng rõ trong đường dẫn. Dự án dùng experimentId thay cho route lồng /experiments/:id/runs. Một số thao tác như upload và bulk có đoạn hành động riêng.</p></div>
+</section>
+
+<section id="s6" class="slide dense" aria-labelledby="s6-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 2 · Phương thức HTTP</p><h2 id="s6-title" tabindex="-1">Phương thức cho biết sẽ đọc, tạo, sửa hay xóa</h2></header>
+<table><thead><tr><th scope="col">Phương thức</th><th scope="col">Đường thí nghiệm dưới /api/v1</th><th scope="col">Cách triển khai</th></tr></thead><tbody>
+  <tr><th scope="row">GET</th><td><code>/experiments</code> · <code>/experiments/:id</code></td><td>Đọc danh sách hoặc chi tiết.</td></tr>
+  <tr><th scope="row">POST</th><td><code>/experiments</code> · <code>/experiments/bulk</code></td><td>Tạo một thí nghiệm hoặc gửi cả lô bản lưu.</td></tr>
+  <tr><th scope="row">PATCH</th><td><code>/experiments/:id</code></td><td>Sửa các trường được phép trên một thí nghiệm.</td></tr>
+  <tr><th scope="row">DELETE</th><td><code>/experiments/:id</code></td><td>Đánh dấu deletedAt để xóa mềm.</td></tr>
+</tbody></table><p class="caption">Dự án dùng PATCH để sửa một phần. PUT theo chuẩn HTTP có ngữ nghĩa tạo hoặc thay thế trạng thái tại URI đích.</p>
+<div class="speaker-note"><p>GET, PATCH và DELETE có thể cùng dùng một URL vì NestJS phân tuyến theo cả phương thức lẫn đường dẫn. Các đường POST /users/me và POST /users/me/password dùng POST cho thao tác cập nhật theo hợp đồng hiện có.</p>
+<p>Chuẩn tham chiếu. <a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9" target="_blank" rel="noopener">RFC 9110 · Phương thức HTTP</a> · <a href="https://www.rfc-editor.org/rfc/rfc5789.html#section-2" target="_blank" rel="noopener">RFC 5789 · PATCH</a></p></div>
+</section>
+
+<section id="s7" class="slide dense" aria-labelledby="s7-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 3 · Gửi lại an toàn</p><h2 id="s7-title" tabindex="-1">Thiết kế tránh ghi trùng hoặc ghi đè bản mới</h2></header>
+<table><thead><tr><th scope="col">Cơ chế</th><th scope="col">Cách áp dụng</th></tr></thead><tbody>
+  <tr><th scope="row"><code>clientId</code></th><td>Nhận diện bản lưu do thiết bị tạo. MongoDB có chỉ mục duy nhất cho mã này trong experiments.</td></tr>
+  <tr><th scope="row"><code>expectedVersion</code></th><td>Phiên bản mà thiết bị đang biết. Service dùng nó làm điều kiện ngay trong thao tác ghi MongoDB.</td></tr>
+  <tr><th scope="row"><code>lastMutationId</code></th><td>Mã lần thay đổi. Bulk trả xác nhận cũ khi mã trùng và bản vẫn ở phiên bản vừa ghi.</td></tr>
+  <tr><th scope="row"><code>idempotencyKey</code></th><td>/sync/batch kiểm tra khóa gắn với tài khoản trong syncOperations và trả duplicate khi đã ghi nhận.</td></tr>
+</tbody></table><p class="key">Khi gửi từ phiên bản cũ và điều kiện nhận diện gửi lại không khớp, bulk báo 409 cho mục đó.</p>
+<div class="speaker-note"><p>Idempotency là gửi lại cùng yêu cầu mà hiệu lực mong muốn trên server vẫn như gửi một lần. Với bulk, server nhận diện khi mã đổi trùng và syncVersion bằng expectedVersion cộng một. Sync tổng quát có nhật ký khóa riêng. Việc nhận diện gửi lại có phạm vi từng mục.</p>
+<p><a href="https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2" target="_blank" rel="noopener">RFC 9110 · Idempotent Methods</a> · <a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Mã kiểm tra phiên bản</a></p></div>
+</section>
+
+<section id="s8" class="slide dense" aria-labelledby="s8-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 4 · Mã trạng thái</p><h2 id="s8-title" tabindex="-1">Mã HTTP hướng dẫn phía gọi xử lý tiếp</h2></header>
+<table><thead><tr><th scope="col">Mã</th><th scope="col">Backend dùng khi nào</th></tr></thead><tbody>
+  <tr><th scope="row">200 / 201</th><td>Đọc hoặc xử lý thành công, hoặc tạo tài nguyên thành công. Với lô, kiểm tra kết quả từng mục.</td></tr>
+  <tr><th scope="row">400 / 413</th><td>Tham số, dữ liệu sai hoặc nội dung vượt giới hạn dung lượng.</td></tr>
+  <tr><th scope="row">401 / 403 / 404</th><td>Phiên không hợp lệ, nguồn hoặc header bị chặn, hoặc tài nguyên không truy cập được.</td></tr>
+  <tr><th scope="row">409</th><td>Phiên bản không khớp. Bulk trả danh sách conflicts để FE xác định mục cần đối chiếu.</td></tr>
+  <tr><th scope="row">429 / 500</th><td>Vượt hạn mức ở đường có giới hạn hoặc lỗi máy chủ khi xử lý.</td></tr>
+</tbody></table><p class="key">Phản hồi lỗi của bulk có thể vẫn chứa items cho những bản đã ghi. FE dùng danh sách đó để cập nhật đúng các bản thành công.</p>
+<div class="speaker-note"><p>Lỗi thông thường của NestJS có statusCode và message. Khi bulk ghi được một phần, body còn có items, conflicts và errors. Sau 409, FE gọi GET /experiments/:id để lấy bản máy chủ. Cấu trúc lỗi hiện có khác biệt giữa endpoint thường và endpoint theo lô.</p>
+<p><a href="API-HANDBOOK.md" target="_blank" rel="noopener">Hợp đồng phản hồi</a></p></div>
+</section>
+
+<section id="s9" class="slide " aria-labelledby="s9-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 5 · Phiên bản API</p><h2 id="s9-title" tabindex="-1">Hai loại phiên bản phục vụ hai việc</h2></header>
+<div class="duo">
+  <div><h3>/api/v1</h3><p>Phiên bản hợp đồng giao tiếp. NestJS gắn tiền tố này cho các route. Client gọi đúng nhóm đường dẫn đã triển khai.</p><p>Thay đổi không tương thích có thể được đưa vào một phiên bản đường dẫn mới.</p></div>
+  <div><h3>syncVersion</h3><p>Phiên bản của từng bản thí nghiệm trong MongoDB. Tăng khi cập nhật để phát hiện thay đổi từ nhiều phía.</p><p>Thiết bị gửi expectedVersion để nói bản của mình dựa trên phiên bản nào.</p></div>
+</div>
+<div class="speaker-note"><p>configureApp dùng setGlobalPrefix để đặt api/v1. Repo hiện có v1. syncVersion do API trả về theo từng bản lưu và được dùng ở lần cập nhật sau.</p>
+<p><a href="../src/config/configure-app.ts" target="_blank" rel="noopener">Cấu hình tiền tố API</a></p></div>
+</section>
+
+<section id="s10" class="slide dense" aria-labelledby="s10-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 7 · Xử lý theo lô</p><h2 id="s10-title" tabindex="-1">Backend có hai hợp đồng gửi theo lô</h2></header>
+<table><thead><tr><th scope="col">Đường dưới /api/v1</th><th scope="col">Đầu vào</th><th scope="col">Phản hồi</th></tr></thead><tbody>
+  <tr><th scope="row"><code>POST /experiments/bulk</code></th><td>Mảng bản lưu thí nghiệm. Mỗi mục có ID, dữ liệu bản lưu và thông tin phiên bản.</td><td>Trả items gồm ID và syncVersion. Có thể kèm lỗi và xung đột từng mục.</td></tr>
+  <tr><th scope="row"><code>POST /sync/batch</code></th><td>Đối tượng chứa operations. Mỗi thao tác có loại tài nguyên, hành động, ID và khóa gửi lại.</td><td>Trả results với trạng thái applied, duplicate, conflict hoặc error.</td></tr>
+</tbody></table><p class="key">Nút Đồng bộ của FE gọi /experiments/bulk. /sync/batch xử lý thao tác trên bộ dữ liệu, thí nghiệm và lần chạy.</p><p class="caption">Bulk nhận tối đa 100 bản lưu mỗi lô. Giới hạn JSON của server là 10 MiB.</p>
+<div class="speaker-note"><p>Theo lô giúp giảm số lần gọi HTTP. Hai API xử lý lần lượt từng mục. Kết quả từng phần có thể được ghi ngay cả khi mục khác lỗi. Controller khai báo HTTP 200 cho bulk thành công. Sync batch trả 201 theo luồng POST, nên phải đọc results để biết từng thao tác thành công hay thất bại.</p></div>
+</section>
+
+<section id="s11" class="slide dense" aria-labelledby="s11-title" hidden>
+<header><p class="eyebrow">Nguyên tắc 8 · Query</p><h2 id="s11-title" tabindex="-1">Phân trang, lọc và sắp xếp có phạm vi rõ</h2></header>
+<table><thead><tr><th scope="col">Nhu cầu</th><th scope="col">Cách API thực hiện</th></tr></thead><tbody>
+  <tr><th scope="row">Phân trang</th><td><code>GET /experiments?page=1&amp;limit=20</code> trả items, total, page, limit và totalPages. Mặc định 20 mục, tối đa 100.</td></tr>
+  <tr><th scope="row">Lọc theo quan hệ</th><td><code>GET /training-runs?experimentId=…</code> lấy lần chạy thuộc một thí nghiệm.</td></tr>
+  <tr><th scope="row">Lọc theo thời điểm</th><td><code>GET /sync/changes?since=…</code> lấy các bản ghi thay đổi từ thời điểm yêu cầu.</td></tr>
+  <tr><th scope="row">Sắp xếp mặc định</th><td>Thí nghiệm theo updatedAt giảm dần. Bộ dữ liệu và lần chạy theo createdAt giảm dần.</td></tr>
+</tbody></table><p class="key">Client chọn trang và dùng bộ lọc đã khai báo. Server quyết định thứ tự sắp xếp.</p>
+<div class="speaker-note"><p>Controller kiểm tra page và limit là số nguyên dương trước khi truy vấn. Dự án chưa có bộ lọc tổng quát hoặc tham số sort tùy chọn. Endpoint changes lọc theo thời điểm và hiện chưa phân trang.</p>
+<p><a href="../src/shared/helpers/pagination.ts" target="_blank" rel="noopener">Kiểm tra phân trang</a> · <a href="../src/modules/sync/sync.service.ts" target="_blank" rel="noopener">Đọc thay đổi</a></p></div>
+</section>
+
+<section id="s12" class="slide dense" aria-labelledby="s12-title" hidden>
+<header><p class="eyebrow">Đánh giá thiết kế</p><h2 id="s12-title" tabindex="-1">Các quyết định và giới hạn</h2></header>
+<table><thead><tr><th scope="col">Đã triển khai</th><th scope="col">Phạm vi cần nói rõ</th></tr></thead><tbody>
+  <tr><th scope="row">NestJS chia theo module</th><td>Controller và service tách trách nhiệm. Service truy cập MongoDB qua model Mongoose.</td></tr>
+  <tr><th scope="row">API theo tài nguyên dưới /api/v1</th><td>27 đường chia theo nhóm. Đường action dùng khi thao tác cần tên riêng.</td></tr>
+  <tr><th scope="row">Ghi theo phiên bản và gửi theo lô</th><td>Kiểm tra từng bản và trả xác nhận theo từng mục. Các nhóm sync có mức kiểm tra phiên bản khác nhau.</td></tr>
+  <tr><th scope="row">Hợp đồng truy vấn và lỗi</th><td>Phân trang cho các danh sách chính. Validation và cấu trúc lỗi còn khác nhau giữa các nhóm API.</td></tr>
+</tbody></table><p class="caption">Phụ lục giữ danh mục đủ 27 endpoint và chức năng.</p>
+<div class="speaker-note"><p>Khi chốt bài, nhắc lại ba quyết định: tổ chức theo nghiệp vụ, API theo tài nguyên và ghi đồng bộ theo phiên bản. Tài liệu triển khai ghi nhận Nginx còn thiếu đường bulk cho môi trường HTTPS.</p>
+<p><a href="BAO-CAO-API-TIEU-LUAN.md" target="_blank" rel="noopener">Báo cáo thiết kế API</a> · <a href="API-HANDBOOK.md" target="_blank" rel="noopener">Hợp đồng API</a></p></div>
+</section>
+
+<section id="s13" class="slide dense" aria-labelledby="s13-title" hidden>
+<header><p class="eyebrow">Phụ lục · Danh mục API</p><h2 id="s13-title" tabindex="-1">Hệ thống và tài khoản</h2></header>
+<table>
+<thead><tr><th scope="col">API dưới /api/v1</th><th scope="col">Chức năng</th></tr></thead><tbody>
+<tr><th scope="row"><code>GET /</code></th><td>Trả phản hồi cơ bản của dịch vụ.</td></tr>
+<tr><th scope="row"><code>GET /health</code></th><td>Trả trạng thái, tên, phiên bản và thời điểm phản hồi.</td></tr>
+<tr><th scope="row"><code>POST /auth/register</code></th><td>Tạo tài khoản.</td></tr>
+<tr><th scope="row"><code>POST /auth/login</code></th><td>Kiểm tra thông tin và cấp phiên.</td></tr>
+<tr><th scope="row"><code>POST /auth/logout</code></th><td>Hủy phiên hiện tại.</td></tr>
+<tr><th scope="row"><code>GET /auth/me</code></th><td>Đọc tài khoản của phiên hiện tại.</td></tr>
+<tr><th scope="row"><code>GET /users/me</code></th><td>Đọc hồ sơ cá nhân.</td></tr>
+<tr><th scope="row"><code>POST /users/me</code></th><td>Đổi tên hiển thị.</td></tr>
+<tr><th scope="row"><code>POST /users/me/password</code></th><td>Đổi mật khẩu và vô hiệu hóa các phiên khác.</td></tr>
+<tr><th scope="row"><code>DELETE /users/me</code></th><td>Tự xóa tài khoản sau khi xác nhận mật khẩu.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Chi tiết trường dữ liệu, quyền và mã lỗi nằm trong <a href="API-HANDBOOK.md" target="_blank" rel="noopener">API Handbook</a>.</p></div>
+</section>
+
+<section id="s14" class="slide dense" aria-labelledby="s14-title" hidden>
+<header><p class="eyebrow">Phụ lục · Danh mục API</p><h2 id="s14-title" tabindex="-1">Bộ dữ liệu CSV</h2></header>
+<table>
+<thead><tr><th scope="col">API dưới /api/v1</th><th scope="col">Chức năng</th></tr></thead><tbody>
+<tr><th scope="row"><code>POST /datasets/upload</code></th><td>Tải tệp CSV lên và tạo bản ghi bộ dữ liệu.</td></tr>
+<tr><th scope="row"><code>POST /datasets</code></th><td>Tạo bản ghi mô tả bộ dữ liệu.</td></tr>
+<tr><th scope="row"><code>GET /datasets</code></th><td>Liệt kê bộ dữ liệu theo trang.</td></tr>
+<tr><th scope="row"><code>GET /datasets/:id</code></th><td>Xem một bộ dữ liệu.</td></tr>
+<tr><th scope="row"><code>GET /datasets/:id/download</code></th><td>Tải tệp gốc.</td></tr>
+<tr><th scope="row"><code>DELETE /datasets/:id</code></th><td>Đánh dấu bộ dữ liệu đã xóa.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Chi tiết trường dữ liệu, quyền và mã lỗi nằm trong <a href="API-HANDBOOK.md" target="_blank" rel="noopener">API Handbook</a>.</p></div>
+</section>
+
+<section id="s15" class="slide dense" aria-labelledby="s15-title" hidden>
+<header><p class="eyebrow">Phụ lục · Danh mục API</p><h2 id="s15-title" tabindex="-1">Bản lưu thí nghiệm</h2></header>
+<table>
+<thead><tr><th scope="col">API dưới /api/v1</th><th scope="col">Chức năng</th></tr></thead><tbody>
+<tr><th scope="row"><code>POST /experiments</code></th><td>Tạo thí nghiệm gắn với một bộ dữ liệu.</td></tr>
+<tr><th scope="row"><code>POST /experiments/bulk</code></th><td>Tạo hoặc cập nhật nhiều bản lưu.</td></tr>
+<tr><th scope="row"><code>GET /experiments</code></th><td>Liệt kê thí nghiệm theo trang.</td></tr>
+<tr><th scope="row"><code>GET /experiments/:id</code></th><td>Đọc thí nghiệm theo ID MongoDB hoặc clientId.</td></tr>
+<tr><th scope="row"><code>PATCH /experiments/:id</code></th><td>Sửa một phần thí nghiệm.</td></tr>
+<tr><th scope="row"><code>DELETE /experiments/:id</code></th><td>Đánh dấu thí nghiệm đã xóa phía máy chủ.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Chi tiết trường dữ liệu, quyền và mã lỗi nằm trong <a href="API-HANDBOOK.md" target="_blank" rel="noopener">API Handbook</a>.</p></div>
+</section>
+
+<section id="s16" class="slide dense" aria-labelledby="s16-title" hidden>
+<header><p class="eyebrow">Phụ lục · Danh mục API</p><h2 id="s16-title" tabindex="-1">Lần huấn luyện và đồng bộ tổng quát</h2></header>
+<table>
+<thead><tr><th scope="col">API dưới /api/v1</th><th scope="col">Chức năng</th></tr></thead><tbody>
+<tr><th scope="row"><code>POST /training-runs</code></th><td>Lưu cấu hình và kết quả của một lần chạy.</td></tr>
+<tr><th scope="row"><code>GET /training-runs</code></th><td>Liệt kê lần chạy, có thể lọc theo experimentId.</td></tr>
+<tr><th scope="row"><code>GET /training-runs/:id</code></th><td>Đọc chi tiết một lần chạy đã lưu.</td></tr>
+<tr><th scope="row"><code>POST /sync/batch</code></th><td>Nhận lô thao tác tạo, sửa, xóa và trả kết quả từng mục.</td></tr>
+<tr><th scope="row"><code>GET /sync/changes</code></th><td>Đọc thay đổi trên máy chủ kể từ thời điểm yêu cầu.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Chi tiết trường dữ liệu, quyền và mã lỗi nằm trong <a href="API-HANDBOOK.md" target="_blank" rel="noopener">API Handbook</a>.</p></div>
+</section>
+<aside id="notes" aria-labelledby="noteTitle" hidden>
+  <header><h3 id="noteTitle">Gợi ý lời nói</h3><button type="button" id="closeNotes">Đóng ghi chú</button></header>
+  <div id="noteBody"></div>
+</aside>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = $('stage'), notes = $('notes');
+  let current = 0;
+  const fromHash = () => {
+    const match = location.hash.match(/^#s?(\d+)$/);
+    const index = slides.findIndex(slide => '#' + slide.id === location.hash);
+    if (index >= 0) return index;
+    return match ? Number(match[1]) - 1 : 0;
+  };
+  function show(number) {
+    current = Math.max(0, Math.min(slides.length - 1, number));
+    slides.forEach((slide, i) => slide.hidden = i !== current);
+    $('noteBody').replaceChildren(...[...slides[current].querySelector('.speaker-note').children].map(node => node.cloneNode(true)));
+    notes.scrollTop = 0;
+    if (location.hash !== '#' + slides[current].id) history.replaceState(null, '', '#' + slides[current].id);
+  }
+  function fit() {
+    stage.style.transform = 'translate(-50%,-50%) scale(' + Math.min(innerWidth / 1280, innerHeight / 720) + ')';
+  }
+  function toggleNotes(open) {
+    notes.hidden = !open;
+    if (open) $('closeNotes').focus();
+    else slides[current].querySelector('h1,h2').focus({ preventScroll: true });
+  }
+  async function fullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch { /* Browser fullscreen is also available through F11. */ }
+  }
+  $('closeNotes').onclick = () => toggleNotes(false);
+  addEventListener('resize', fit);
+  addEventListener('hashchange', () => show(fromHash()));
+  addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches('select,input,textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'n' || (k === 'escape' && !notes.hidden)) { e.preventDefault(); toggleNotes(notes.hidden); }
+    else if (k === 'f') { e.preventDefault(); void fullscreen(); }
+    else if (['arrowright','pagedown','arrowleft','pageup','home','end'].includes(k) ||
+             ([' ','enter'].includes(k) && !e.target.closest('button,a'))) {
+      e.preventDefault();
+      if (k === 'home') show(0);
+      else if (k === 'end') show(slides.length - 1);
+      else show(current + (['arrowleft','pageup'].includes(k) ? -1 : 1));
+    }
+  });
+  fit();
+  show(fromHash());
+})();
+</script>
+</body>
+</html>

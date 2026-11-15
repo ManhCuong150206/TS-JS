@@ -8,7 +8,7 @@ import type { Connection } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
-import { configureApp } from '../src/common/configure-app.js';
+import { configureApp } from '../src/config/configure-app.js';
 
 const prefix = '/api/v1';
 const header = { 'X-Requested-With': 'XMLHttpRequest' };

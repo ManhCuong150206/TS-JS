@@ -15,7 +15,7 @@ process.env.CORS_ORIGINS='http://localhost:4200,http://127.0.0.1:4300,http://127
 const {NestFactory}=await import('@nestjs/core');
 const {getConnectionToken}=await import('@nestjs/mongoose');
 const {AppModule}=await import('../dist/app.module.js');
-const {configureApp}=await import('../dist/common/configure-app.js');
+const {configureApp}=await import('../dist/config/configure-app.js');
 const app=await NestFactory.create(AppModule,{logger:['error']});
 configureApp(app);
 let closing=false;

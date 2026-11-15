@@ -3,13 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { DatasetsModule } from './datasets/datasets.module.js';
-import { ExperimentsModule } from './experiments/experiments.module.js';
-import { TrainingRunsModule } from './training-runs/training-runs.module.js';
-import { SyncModule } from './sync/sync.module.js';
-import { LoginModule } from './login/login.module.js';
-import { mongoUri } from './common/database.config.js';
-import { UsersModule } from './users/users.module.js';
+import { DatasetsModule } from './modules/datasets/datasets.module.js';
+import { ExperimentsModule } from './modules/experiments/experiments.module.js';
+import {
+  TrainingRunsModule,
+} from './modules/training-runs/training-runs.module.js';
+import { SyncModule } from './modules/sync/sync.module.js';
+import { LoginModule } from './modules/login/login.module.js';
+import { mongoUri } from './config/database.config.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   controllers: [AppController],

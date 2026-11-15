@@ -66,7 +66,7 @@ CSV xuất kết quả thêm validation_mse, compute_ms, setup_ms, stop_reason, 
 | FE learning-walkthrough/, learning-route/, viewport3d/ | Dừng từng pha, đồng bộ minh họa với kết quả thật |
 | FE results-panel/, algorithm-notes/ | Dùng validation để theo dõi và nhận xét |
 | FE models, experiments-store, experiments-panel | Lưu/xuất báo cáo mở rộng, điều kiện lưu cuối |
-| Backend experiments và common/ownership.ts | Nhận/lưu learningReport |
+| Backend experiments và shared/helpers/ownership.ts | Nhận/lưu learningReport |
 | Unit, API E2E và browser tests | Chia tập, leakage, timing, lưu/sync và A–F |
 
 ## 6. Kiểm chứng và giới hạn

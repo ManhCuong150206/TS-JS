@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hồi quy 3D — Tổng quan đề tài</title>
+<style>
+:root{color-scheme:light;--paper:#f5f7fb;--ink:#0f1b3d;--muted:#45536d;--blue:#304dc4;--line:#ccd5e6;--wash:#e7edff;--deep:#102449;--white:#f7f9ff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0b1226;color:var(--ink);font:22px/1.36 "Segoe UI",Arial,sans-serif;overflow:hidden}
+h1,h2,h3,p,ul,ol{margin:0}
+h1{font-size:88px;line-height:1;letter-spacing:-3px}
+h2{font-size:47px;line-height:1.12;letter-spacing:-1.2px}
+h3{font-size:24px;line-height:1.23}
+p+p{margin-top:12px}
+a{color:inherit;text-underline-offset:4px}
+button,select{font:inherit}
+code{font: .84em Consolas,monospace;color:#23409e;overflow-wrap:anywhere}
+#stage{position:absolute;top:50%;left:50%;width:1280px;height:720px;transform-origin:center;background:var(--paper)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;gap:24px;padding:48px 62px}
+.slide[hidden]{display:none}
+.slide header{display:grid;gap:10px}
+.eyebrow{color:var(--blue);font-size:17px;font-weight:750;letter-spacing:.09em;text-transform:uppercase}
+.lead{font-size:32px;line-height:1.29;max-width:1010px}
+.caption{color:var(--muted);font-size:19px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+.duo>div{display:grid;gap:13px;min-width:0;border-top:2px solid var(--line);padding-top:15px}
+.duo h3{color:var(--blue)}
+ul,ol{padding-left:1.26em}
+li+li{margin-top:10px}
+.key{border-left:4px solid var(--blue);background:var(--wash);padding:12px 17px}
+.cover,.close{background:var(--deep);color:var(--white);justify-content:center}
+.cover .eyebrow,.close .eyebrow{color:#b9ccff}
+.cover .lead,.close .lead{max-width:890px}
+.agenda{border-top:1px solid #7084ab;padding-top:14px;max-width:920px;color:#d4dff9}
+.close h2{font-size:60px;max-width:1040px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:22px;line-height:1.28}
+th,td{padding:12px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--wash);color:#203789;font-size:18px}
+tbody th{font-weight:700;color:#243e9b;white-space:nowrap}
+.dense{gap:21px}
+.dense table{font-size:20px}
+.dense th,.dense td{padding:10px 12px}
+.flow{list-style:none;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:25px}
+.flow li{position:relative;margin:0;border-top:3px solid var(--blue);padding-top:11px}
+.flow li:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:10px;color:var(--blue)}
+.flow b{display:block;margin-bottom:6px}
+.flow span{font-size:20px;display:block;color:var(--muted)}
+.split{display:grid;grid-template-columns:64fr 16fr 20fr;gap:3px}
+.split span{padding:12px 14px;font-size:20px;font-weight:700;background:#dce5ff;color:#173384}
+.split span:nth-child(2){background:#e3f2ed;color:#174f41}
+.split span:nth-child(3){background:#f3e9d5;color:#58421e}
+.numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:36px}
+.numbers div{border-top:3px solid var(--blue);padding-top:12px}
+.numbers strong{display:block;font-size:56px;line-height:1.1;color:var(--blue);font-variant-numeric:tabular-nums}
+.numbers span{display:block;margin-top:7px;color:var(--muted)}
+.speaker-note{display:none}
+#notes button{background:#fff;border:1px solid #8291b4;color:var(--ink);border-radius:5px;padding:7px 11px;cursor:pointer}
+:focus-visible{outline:3px solid #3156db;outline-offset:2px}
+#notes{position:absolute;z-index:2;inset:auto 62px 78px;max-height:390px;overflow:auto;padding:20px 25px;background:#fff;border:2px solid var(--blue);box-shadow:0 12px 40px #05102b33;font-size:21px}
+#notes header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#notes pre{font:17px/1.4 Consolas,monospace;white-space:pre-wrap;background:var(--paper);padding:10px 14px;margin:12px 0}
+@page{size:13.333in 7.5in;margin:0}
+@media print{html,body{height:auto;background:white;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#stage{position:static;width:1280px;height:auto;transform:none!important}
+.slide,.slide[hidden]{position:relative;display:flex;height:720px;width:1280px;break-after:page}
+.slide:last-of-type{break-after:auto}
+#notes{display:none!important}}
+</style>
+</head>
+<body>
+<main id="stage">
+<section id="s1" class="slide cover" data-label="Thuyết trình đồ án" aria-labelledby="s1-title">
+<header><h1 id="s1-title" tabindex="-1">Hồi quy 3D</h1></header>
+<p class="lead">Một ứng dụng web để chạy, quan sát và so sánh các mô hình hồi quy.</p>
+<p class="agenda">Theo dõi một thí nghiệm Linear từ lúc chọn dữ liệu đến khi lưu kết quả vào MongoDB.</p>
+<div class="speaker-note"><p>Em xin trình bày Hồi quy 3D. Sản phẩm giúp người học thấy mô hình dự đoán thế nào, sai ở đâu và điều chỉnh ra sao sau một lần học. Em sẽ minh họa bằng một thí nghiệm Linear rồi cho thầy xem mô hình, API và dữ liệu lưu đi cùng nhau thế nào.</p><p>Bấm N để xem lời gợi ý khi luyện.</p></div>
+</section>
+
+<section id="s2" class="slide" data-label="Bài toán" aria-labelledby="s2-title" hidden>
+<header><p class="eyebrow">Bài toán</p><h2 id="s2-title" tabindex="-1">Mô hình dự đoán sai rồi học thế nào?</h2></header>
+<p class="lead">Hồi quy dự đoán một giá trị số từ dữ liệu đầu vào. Từ các mẫu đã có, mô hình tìm hệ số để dự đoán sát hơn.</p>
+<div class="numbers" aria-label="Ví dụ mẫu Linear"><div><strong>0,913</strong><span>Giá trị thật của một mẫu</span></div><div><strong>0,000</strong><span>Dự đoán lúc bắt đầu</span></div><div><strong>0,018</strong><span>Dự đoán sau một vòng</span></div></div>
+<p class="key">Web cho thấy điểm thật, điểm dự đoán và đoạn sai số trên hình 3D. Người học bấm qua từng pha để thấy hệ số thay đổi.</p>
+<p class="caption">Số liệu từ mẫu train đầu tiên trong cấu hình Linear minh họa của dự án.</p>
+<div class="speaker-note"><p>Đọc ví dụ trên slide: giá trị thật khoảng 0,913. Lúc đầu hệ số bằng 0 nên dự đoán bằng 0. Sau một vòng, dự đoán của mẫu này đổi thành khoảng 0,018. Đó là ví dụ của một mẫu. Mô hình được cập nhật từ cả tập train, vì vậy phải xem sai số trên toàn tập để biết chất lượng chung.</p><p>Chuyển sang slide sau bằng cách giới thiệu đường đi của thí nghiệm này trên web.</p></div>
+</section>
+
+<section id="s3" class="slide" data-label="Yêu cầu chức năng" aria-labelledby="s3-title" hidden>
+<header><p class="eyebrow">Yêu cầu chức năng</p><h2 id="s3-title" tabindex="-1">Người dùng làm gì từ lúc mở web?</h2></header>
+<ol class="flow">
+  <li><b>Chọn mô hình</b><span>Mở web và chọn Linear, Polynomial, Ridge hoặc Lasso.</span></li>
+  <li><b>Chuẩn bị dữ liệu</b><span>Dùng dữ liệu mẫu hoặc nhập CSV, chọn cột và xử lý ô thiếu.</span></li>
+  <li><b>Chạy và quan sát</b><span>Chỉnh tham số, chạy hoặc tạm dừng. Xem 3D và học qua từng pha.</span></li>
+  <li><b>Đánh giá</b><span>Ghi nhận lần thử, so sánh cấu hình rồi mở kết quả test.</span></li>
+</ol><div class="duo">
+  <div><h3>Khách</h3><p>Vào thẳng trang chọn thuật toán và thực nghiệm ngay. Có thể xuất nhật ký JSON của phiên.</p></div>
+  <div><h3>Thành viên</h3><p>Đăng ký, đăng nhập, đăng xuất. Có thể lưu, mở lại, so sánh, xuất JSON/CSV và đồng bộ thí nghiệm.</p></div>
+</div>
+<div class="speaker-note"><p>Em mở web là có thể chọn thuật toán với tư cách khách. Sau đó em đi từ dữ liệu, chạy, quan sát đến đánh giá. Nếu muốn lưu kết quả lâu dài, em đăng nhập trước khi bắt đầu. Nhật ký khách nằm trong bộ nhớ của phiên và sẽ mất khi tải lại.</p></div>
+</section>
+
+<section id="s6" class="slide" data-label="Bước 1 · Dữ liệu" aria-labelledby="s6-title" hidden>
+<header><p class="eyebrow">Bước 1 · Dữ liệu</p><h2 id="s6-title" tabindex="-1">500 mẫu được dùng ra sao?</h2></header>
+<div class="split" aria-label="320 mẫu train, 80 mẫu validation, 100 mẫu test"><span>Train · 320</span><span>Validation · 80</span><span>Test · 100</span></div><ol class="flow">
+  <li><b>Học từ train</b><span>320 mẫu dùng để tính hệ số.</span></li>
+  <li><b>Thử trên validation</b><span>80 mẫu để so cấu hình trong lúc thử.</span></li>
+  <li><b>Kiểm tra cuối trên test</b><span>100 mẫu để đánh giá sau khi chốt cấu hình.</span></li>
+</ol><p class="key">Khi nhập CSV, chọn cột đầu vào X và cột cần dự đoán y. Nếu chuẩn hóa hoặc điền thiếu theo trung bình, thống kê chỉ lấy từ train.</p><p class="caption">Ví dụ dùng dữ liệu tuyến tính mặc định, 2 đầu vào, seed 42. Seed là số giúp tái tạo cùng dữ liệu và cách chia.</p>
+<div class="speaker-note"><p>Em dùng 500 mẫu cùng seed 42 để thí nghiệm có thể lặp lại. Với tỷ lệ phát triển mặc định 80%, 400 mẫu được chia tiếp thành 320 train và 80 validation. 100 mẫu còn lại dành cho test.</p><p>Nếu dùng CSV, dòng thiếu y bị bỏ. Ô thiếu ở X có thể bỏ dòng, điền 0 hoặc điền trung bình. Khi đổi tham số, giữ nguyên ba tập để so sánh công bằng.</p></div>
+</section>
+
+<section id="s8" class="slide dense" data-label="Bước 2 · Học từng bước" aria-labelledby="s8-title" hidden>
+<header><p class="eyebrow">Bước 2 · Học từng bước</p><h2 id="s8-title" tabindex="-1">Một vòng học trên hình 3D</h2></header>
+<table>
+<thead><tr><th scope="col">Pha</th><th scope="col">Điều người xem thấy</th></tr></thead>
+<tbody>
+  <tr><th scope="row">A · Đầu vào</th><td>Mẫu đang xem có giá trị thật y ≈ <b>0,913</b>.</td></tr>
+  <tr><th scope="row">B · Dự đoán</th><td>Mô hình ban đầu dự đoán <b>0</b> cho mẫu này.</td></tr>
+  <tr><th scope="row">C · Sai số</th><td>Đoạn nối hai điểm biểu diễn sai số ŷ − y ≈ <b>−0,913</b>.</td></tr>
+  <tr><th scope="row">D · Tính sai số chung</th><td>Tính MSE trên cả 320 mẫu train. Trước khi cập nhật, MSE ≈ <b>0,7310</b>.</td></tr>
+  <tr><th scope="row">E · Đề xuất</th><td>Tính hệ số mới và cho xem trước đường hoặc mặt dự đoán.</td></tr>
+  <tr><th scope="row">F · Áp dụng</th><td>Cập nhật hệ số một lần. Số vòng tăng từ 0 lên 1 và MSE train còn khoảng <b>0,7034</b>.</td></tr>
+</tbody>
+</table><p class="key">MSE là trung bình bình phương sai số. Mẫu trên hình chỉ giúp minh họa, còn hệ số được cập nhật từ cả tập train.</p>
+<div class="speaker-note"><p>Khi trình bày hãy chỉ điểm thật trước, sau đó chỉ điểm dự đoán và đoạn sai số. Em nhấn mạnh E là xem trước hệ số mới và F mới áp dụng. Tính theo cấu hình Linear, tốc độ học 0,01, bắt đầu từ hệ số 0. Các số được làm tròn.</p><p>Chế độ Chạy cập nhật liên tục. Step áp dụng một vòng. Trang học cho bấm qua sáu pha hoặc tự trình diễn một vòng.</p></div>
+</section>
+
+<section id="s9" class="slide" data-label="Bước 3 · Đánh giá" aria-labelledby="s9-title" hidden>
+<header><p class="eyebrow">Bước 3 · Đánh giá</p><h2 id="s9-title" tabindex="-1">Đổi tốc độ học rồi chọn cấu hình</h2></header>
+<p>Hai lần chạy dùng cùng 500 mẫu, cùng cách chia và tối đa 100 vòng. Chỉ đổi tốc độ học, tức độ lớn mỗi bước cập nhật.</p><table>
+<thead><tr><th scope="col">Lần chạy</th><th scope="col">Tốc độ học</th><th scope="col">Vòng đã chạy</th><th scope="col">MSE trên validation</th></tr></thead>
+<tbody>
+  <tr><th scope="row">A · Làm mốc</th><td>0,01</td><td>100 · đạt giới hạn</td><td>0,0403</td></tr>
+  <tr><th scope="row">B · Thử lại</th><td>0,03</td><td>97 · đạt ngưỡng dừng</td><td><b>0,0240</b></td></tr>
+</tbody>
+</table><p class="key">B có MSE validation thấp hơn trong ví dụ này. Chọn B rồi bấm <b>Đánh giá test</b>. MSE trên 100 mẫu test ≈ <b>0,0243</b>.</p>
+<div class="speaker-note"><p>Em chỉ đổi tốc độ học từ 0,01 lên 0,03. Lần B có MSE validation thấp hơn trong lần thử này nên em chọn B và cuối cùng mới xem test.</p><p>Các số đến từ bộ tính của dự án với cấu hình dữ liệu mẫu đã nêu. Nếu chạy với dữ liệu khác, hãy đọc kết quả thực tế. Nhật ký còn có số vòng, lý do dừng, thời gian tính trong Worker và ghi chú quan sát. Không dùng thời gian một lần chạy để kết luận mô hình nào nhanh hơn.</p></div>
+</section>
+
+<section id="s10" class="slide" data-label="Kiến trúc FE và BE" aria-labelledby="s10-title" hidden>
+<header><p class="eyebrow">Kiến trúc FE và BE</p><h2 id="s10-title" tabindex="-1">Phần nào chạy trên máy người dùng?</h2></header>
+<div class="duo">
+  <div><h3>Trình duyệt · Angular</h3><p>Nhận thao tác chọn dữ liệu và bấm chạy. Web Worker tính hồi quy ở luồng riêng. Three.js vẽ mô hình từ kết quả trả về.</p></div>
+  <div><h3>Máy chủ · NestJS</h3><p>Xử lý đăng nhập và yêu cầu lưu/đồng bộ. Controller nhận yêu cầu, Service kiểm tra dữ liệu và dùng Mongoose để ghi vào MongoDB.</p></div>
+</div><h3>Đường đi của thí nghiệm Linear</h3><ol class="flow">
+  <li><b>Bấm Chạy</b><span>Angular → Web Worker → hình 3D và bảng sai số.</span></li>
+  <li><b>Bấm Lưu</b><span>Angular ghi thí nghiệm vào IndexedDB trên trình duyệt.</span></li>
+  <li><b>Bấm Đồng bộ</b><span>Angular gọi API NestJS để ghi bản lưu lên MongoDB.</span></li>
+</ol>
+<div class="speaker-note"><p>Em giải thích hai nơi chạy trong hệ thống bằng ba nút mà người dùng thấy. Chạy dùng CPU của thiết bị người dùng. Lưu giữ bản kết quả ngay trong trình duyệt. Đồng bộ là lúc gửi bản lưu lên BE.</p><p>Khi chạy cục bộ, Angular thường ở localhost:4200 và NestJS ở cổng 3000. Proxy chuyển các yêu cầu /api sang BE.</p></div>
+</section>
+
+<section id="s11" class="slide" data-label="Bước 4 · Lưu kết quả" aria-labelledby="s11-title" hidden>
+<header><p class="eyebrow">Bước 4 · Lưu kết quả</p><h2 id="s11-title" tabindex="-1">Một bản lưu nằm ở đâu?</h2></header>
+<table>
+<thead><tr><th scope="col">Nơi lưu</th><th scope="col">Dữ liệu được giữ</th><th scope="col">Khi nào ghi</th></tr></thead>
+<tbody>
+  <tr><th scope="row">IndexedDB · trình duyệt</th><td>Tên thí nghiệm, dữ liệu đã xử lý hoặc seed, thiết lập, hệ số và chỉ số đánh giá.</td><td>Thành viên bấm Lưu sau khi hoàn tất đánh giá.</td></tr>
+  <tr><th scope="row">MongoDB · máy chủ</th><td>Tài khoản, phiên, thông tin bộ dữ liệu và bản thí nghiệm đã gửi. Có thêm bản ghi lần chạy và nhật ký API.</td><td>NestJS ghi dữ liệu sau khi xử lý từng yêu cầu.</td></tr>
+</tbody>
+</table><p class="key">Ví dụ lưu bản <b>Linear · 500 mẫu</b>. Khi ở IndexedDB, bản này hiện “Chờ đồng bộ”. Khi NestJS xác nhận đã ghi MongoDB, nhãn đổi thành “Đã đồng bộ”.</p>
+<div class="speaker-note"><p>Browser lưu trước để khi mất mạng vẫn giữ được bản đã lưu. Khi có mạng, người dùng chủ động bấm Đồng bộ. MongoDB lưu dữ liệu dạng tài liệu. Ví dụ một thí nghiệm có thể giữ tên, cấu hình, hệ số w/b và các chỉ số của mô hình trong cùng bản ghi.</p><p>Bản CSV có thể kèm các tập đã xử lý để dùng lại. MongoDB giữ thông tin bộ dữ liệu. Tệp CSV tải lên qua API nằm trong thư mục lưu tệp của máy chủ.</p></div>
+</section>
+
+<section id="api-fe" class="slide dense" data-label="API trong luồng sử dụng" aria-labelledby="api-fe-title" hidden>
+<header><p class="eyebrow">API trong luồng sử dụng</p><h2 id="api-fe-title" tabindex="-1">FE gửi yêu cầu nào đến NestJS?</h2></header>
+<p class="caption">Đường đầy đủ bắt đầu bằng /api/v1. Ví dụ đăng nhập gọi POST /api/v1/auth/login.</p><table>
+<thead><tr><th scope="col">Người dùng thao tác</th><th scope="col">API</th><th scope="col">NestJS làm gì</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Đăng ký</th><td><code>POST /auth/register</code></td><td>Tạo tài khoản.</td></tr>
+  <tr><th scope="row">Đăng nhập</th><td><code>POST /auth/login</code></td><td>Kiểm tra mật khẩu, tạo phiên và gửi cookie.</td></tr>
+  <tr><th scope="row">Kiểm tra phiên</th><td><code>GET /auth/me</code></td><td>Trả thông tin tài khoản của phiên hiện tại.</td></tr>
+  <tr><th scope="row">Đăng xuất</th><td><code>POST /auth/logout</code></td><td>Hủy phiên và xóa cookie.</td></tr>
+  <tr><th scope="row">Đồng bộ thí nghiệm</th><td><code>POST /experiments/bulk</code></td><td>Nhận bản lưu, kiểm tra phiên bản rồi ghi MongoDB.</td></tr>
+  <tr><th scope="row">Xem bản xung đột</th><td><code>GET /experiments/:id</code></td><td>Lấy bản trên máy chủ để người dùng xử lý.</td></tr>
+</tbody>
+</table>
+<div class="speaker-note"><p>Hai API chính là login để cấp phiên và experiments/bulk để nhận bản lưu. GET /auth/me được dùng để kiểm tra phiên. Ví dụ đồng bộ trước hết xác định tài khoản từ cookie, so phiên bản rồi trả xác nhận theo từng bản ghi.</p><p>Nếu bị 409, FE gọi GET /experiments/:id để lấy bản trên máy chủ. Mã 401 cho biết yêu cầu cần phiên đăng nhập hợp lệ. Backend hiện có tổng cộng 27 endpoint.</p></div>
+</section>
+
+<section id="s4" class="slide dense" data-label="Yêu cầu phi chức năng" aria-labelledby="s4-title" hidden>
+<header><p class="eyebrow">Yêu cầu phi chức năng</p><h2 id="s4-title" tabindex="-1">Hệ thống giữ trải nghiệm ổn định thế nào?</h2></header>
+<table>
+<thead><tr><th scope="col">Tiêu chí</th><th scope="col">Cách hệ thống đáp ứng</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Phản hồi khi chạy</th><td>Web Worker tính mô hình ở luồng riêng để giảm tải cho giao diện.</td></tr>
+  <tr><th scope="row">Tính đúng và tái lập</th><td>Cùng dữ liệu và seed cho cùng cách chia. Train cung cấp thống kê tiền xử lý.</td></tr>
+  <tr><th scope="row">Làm việc khi mất mạng</th><td>Trang đã tải có thể tiếp tục tính trên thiết bị. Bản lưu cục bộ chờ người dùng đồng bộ.</td></tr>
+  <tr><th scope="row">Bảo mật và nhất quán</th><td>Mật khẩu được băm. BE kiểm tra phiên, chủ sở hữu và phiên bản bản lưu.</td></tr>
+  <tr><th scope="row">Dễ dùng</th><td>Bố cục phù hợp màn hình nhỏ. Có hỗ trợ bàn phím và giảm chuyển động.</td></tr>
+  <tr><th scope="row">Dễ bảo trì</th><td>Tách giao diện, bộ tính và API. Có kiểm thử công thức, giao diện và API.</td></tr>
+</tbody>
+</table>
+<div class="speaker-note"><p>Phần này giải thích những tiêu chí hệ thống cần giữ khi các chức năng được dùng thật. Đang chạy vẫn thao tác được nhờ tách tính toán. Đang mất mạng vẫn có thể học nếu ứng dụng đã tải. Bản lưu gửi lên BE phải qua kiểm tra tài khoản và phiên bản.</p><p>Đăng nhập mới và đồng bộ cần kết nối. Để mở lại ứng dụng khi mất mạng, bản production cần được Service Worker lưu tài nguyên trước.</p></div>
+</section>
+
+<aside id="notes" aria-labelledby="noteTitle" hidden>
+  <header><h3 id="noteTitle">Gợi ý lời nói</h3><button type="button" id="closeNotes">Đóng ghi chú</button></header>
+  <div id="noteBody"></div>
+</aside>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = $('stage'), notes = $('notes');
+  let current = 0;
+  const fromHash = () => {
+    const match = location.hash.match(/^#s?(\d+)$/);
+    const index = slides.findIndex(slide => '#' + slide.id === location.hash);
+    if (index >= 0) return index;
+    return match ? Number(match[1]) - 1 : 0;
+  };
+  function show(number) {
+    current = Math.max(0, Math.min(slides.length - 1, number));
+    slides.forEach((slide, i) => slide.hidden = i !== current);
+    $('noteBody').replaceChildren(...[...slides[current].querySelector('.speaker-note').children].map(node => node.cloneNode(true)));
+    notes.scrollTop = 0;
+    if (location.hash !== '#' + slides[current].id) history.replaceState(null, '', '#' + slides[current].id);
+  }
+  function fit() {
+    stage.style.transform = 'translate(-50%,-50%) scale(' + Math.min(innerWidth / 1280, innerHeight / 720) + ')';
+  }
+  function toggleNotes(open) {
+    notes.hidden = !open;
+    if (open) $('closeNotes').focus();
+    else slides[current].querySelector('h1,h2').focus({ preventScroll: true });
+  }
+  async function fullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch { /* Browser fullscreen is also available through F11. */ }
+  }
+  $('closeNotes').onclick = () => toggleNotes(false);
+  addEventListener('resize', fit);
+  addEventListener('hashchange', () => show(fromHash()));
+  addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches('select,input,textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'n' || (k === 'escape' && !notes.hidden)) { e.preventDefault(); toggleNotes(notes.hidden); }
+    else if (k === 'f') { e.preventDefault(); void fullscreen(); }
+    else if (['arrowright','pagedown','arrowleft','pageup','home','end'].includes(k) ||
+             ([' ','enter'].includes(k) && !e.target.closest('button,a'))) {
+      e.preventDefault();
+      if (k === 'home') show(0);
+      else if (k === 'end') show(slides.length - 1);
+      else show(current + (['arrowleft','pageup'].includes(k) ? -1 : 1));
+    }
+  });
+  fit();
+  show(fromHash());
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hồi quy 3D — Yêu cầu và thiết kế dữ liệu</title>
+<style>
+:root{color-scheme:light;--paper:#f5f7fb;--ink:#0f1b3d;--muted:#45536d;--blue:#304dc4;--line:#ccd5e6;--wash:#e7edff;--deep:#102449;--white:#f7f9ff}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#0b1226;color:var(--ink);font:22px/1.36 "Segoe UI",Arial,sans-serif;overflow:hidden}
+h1,h2,h3,p,ul,ol{margin:0}
+h1{font-size:88px;line-height:1;letter-spacing:-3px}
+h2{font-size:47px;line-height:1.12;letter-spacing:-1.2px}
+h3{font-size:24px;line-height:1.23}
+p+p{margin-top:12px}
+a{color:inherit;text-underline-offset:4px}
+button,select{font:inherit}
+code{font: .84em Consolas,monospace;color:#23409e;overflow-wrap:anywhere}
+#stage{position:absolute;top:50%;left:50%;width:1280px;height:720px;transform-origin:center;background:var(--paper)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;gap:24px;padding:48px 62px}
+.slide[hidden]{display:none}
+.slide header{display:grid;gap:10px}
+.eyebrow{color:var(--blue);font-size:17px;font-weight:750;letter-spacing:.09em;text-transform:uppercase}
+.lead{font-size:32px;line-height:1.29;max-width:1010px}
+.caption{color:var(--muted);font-size:19px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+.duo>div{display:grid;gap:13px;min-width:0;border-top:2px solid var(--line);padding-top:15px}
+.duo h3{color:var(--blue)}
+ul,ol{padding-left:1.26em}
+li+li{margin-top:10px}
+.key{border-left:4px solid var(--blue);background:var(--wash);padding:12px 17px}
+.cover,.close{background:var(--deep);color:var(--white);justify-content:center}
+.cover .eyebrow,.close .eyebrow{color:#b9ccff}
+.cover .lead,.close .lead{max-width:890px}
+.agenda{border-top:1px solid #7084ab;padding-top:14px;max-width:920px;color:#d4dff9}
+.close h2{font-size:60px;max-width:1040px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:22px;line-height:1.28}
+th,td{padding:12px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{background:var(--wash);color:#203789;font-size:18px}
+tbody th{font-weight:700;color:#243e9b;white-space:nowrap}
+.dense{gap:21px}
+.dense table{font-size:20px}
+.dense th,.dense td{padding:10px 12px}
+.flow{list-style:none;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:25px}
+.flow li{position:relative;margin:0;border-top:3px solid var(--blue);padding-top:11px}
+.flow li:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:10px;color:var(--blue)}
+.flow b{display:block;margin-bottom:6px}
+.flow span{font-size:20px;display:block;color:var(--muted)}
+.speaker-note{display:none}
+#notes button{background:#fff;border:1px solid #8291b4;color:var(--ink);border-radius:5px;padding:7px 11px;cursor:pointer}
+:focus-visible{outline:3px solid #3156db;outline-offset:2px}
+#notes{position:absolute;z-index:2;inset:auto 62px 78px;max-height:390px;overflow:auto;padding:20px 25px;background:#fff;border:2px solid var(--blue);box-shadow:0 12px 40px #05102b33;font-size:21px}
+#notes header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#notes pre{font:17px/1.4 Consolas,monospace;white-space:pre-wrap;background:var(--paper);padding:10px 14px;margin:12px 0}
+@page{size:13.333in 7.5in;margin:0}
+@media print{html,body{height:auto;background:white;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#stage{position:static;width:1280px;height:auto;transform:none!important}
+.slide,.slide[hidden]{position:relative;display:flex;height:720px;width:1280px;break-after:page}
+.slide:last-of-type{break-after:auto}
+#notes{display:none!important}}
+
+.schema tbody th{white-space:normal;width:35%}
+.schema tbody th code{font-weight:600}
+.entity-chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:13px;align-items:center}
+.entity-chain>div{background:var(--wash);border-top:3px solid var(--blue);padding:12px 15px}
+.entity-chain strong,.entity-chain>div span{display:block}
+.entity-chain>div span{font-size:19px;color:var(--muted)}
+.relation{font-size:19px;color:var(--blue);font-weight:700;white-space:nowrap}
+
+.dataset-schema tbody th{width:26%}
+.cover h1{max-width:1100px}
+</style>
+</head>
+<body>
+<main id="stage">
+<section id="s1" class="slide cover" aria-labelledby="s1-title">
+<header><p class="eyebrow">Hồi quy 3D</p><h1 id="s1-title" tabindex="-1">Yêu cầu và thiết kế dữ liệu</h1></header>
+<p class="lead">Từ thao tác học trên trình duyệt đến cách hệ thống lưu thí nghiệm trong MongoDB.</p><p class="agenda">Chức năng theo luồng sử dụng → Thực thể và schema → Chất lượng và khả năng chịu tải</p>
+<div class="speaker-note"><p>Em sẽ đi theo một lượt sử dụng thực tế, sau đó giải thích các collection và vì sao chọn cách nhúng hoặc tham chiếu dữ liệu. Cuối cùng là các ngưỡng có trong code và tiêu chí đề xuất để đo tải. Dùng phím ← / → để chuyển slide, F để toàn màn hình, N để xem ghi chú.</p></div>
+</section>
+
+<section id="s2" class="slide dense" aria-labelledby="s2-title" hidden>
+<header><p class="eyebrow">Phạm vi hệ thống</p><h2 id="s2-title" tabindex="-1">Ai dùng và mỗi phần xử lý gì?</h2></header>
+<ol class="flow ">
+  <li><b>Angular</b><span>Chọn thuật toán và dữ liệu. Hiển thị cảnh 3D, biểu đồ sai số và các bước học.</span></li>
+  <li><b>Web Worker</b><span>Tính hồi quy trong trình duyệt. Gửi hệ số, dự đoán và sai số cho giao diện.</span></li>
+  <li><b>NestJS</b><span>Xác thực yêu cầu, kiểm tra quyền và dữ liệu. Nhận bản lưu khi người dùng bấm đồng bộ.</span></li>
+  <li><b>MongoDB</b><span>Lưu các tài liệu theo schema Mongoose. Tệp CSV upload nằm ở vùng lưu tệp của backend.</span></li>
+</ol><table>
+<thead><tr><th scope="col">Đối tượng</th><th scope="col">Phạm vi sử dụng</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Khách</th><td>Vào thẳng phần chọn thuật toán, chạy thí nghiệm và xuất nhật ký lần thử.</td></tr>
+  <tr><th scope="row">Thành viên</th><td>Có thêm kho thí nghiệm trên thiết bị, khôi phục, so sánh và đồng bộ bản lưu lên máy chủ.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Khách chỉ cần bấm Guest để vào phần chọn thuật toán. Các phép tính học chạy trên máy người dùng. Muốn ghi lên MongoDB thì gọi API backend và phải có phiên hợp lệ.</p><p><a href="../../../Angular/Hoiquy3d/src/app/state/auth-session.ts" target="_blank" rel="noopener">Phiên và chế độ khách</a> · <a href="../../../Angular/Hoiquy3d/src/app/core/engine/regression.worker.ts" target="_blank" rel="noopener">Web Worker</a> · <a href="../src/app.module.ts" target="_blank" rel="noopener">Module backend</a></p></div>
+</section>
+
+<section id="s3" class="slide dense" aria-labelledby="s3-title" hidden>
+<header><p class="eyebrow">Yêu cầu chức năng · Dữ liệu đầu vào</p><h2 id="s3-title" tabindex="-1">Tạo dữ liệu hoặc đưa CSV vào thí nghiệm</h2></header>
+<table>
+<thead><tr><th scope="col">Chức năng</th><th scope="col">Người dùng làm gì?</th><th scope="col">Hệ thống xử lý và phản hồi</th></tr></thead>
+<tbody>
+  <tr><th scope="row">F01 · Chọn mô hình</th><td>Chọn Linear, Polynomial, Ridge hoặc Lasso.</td><td>Mở phòng thí nghiệm tương ứng và hiện các tham số phù hợp.</td></tr>
+  <tr><th scope="row">F02 · Sinh dữ liệu</th><td>Chọn số mẫu, số đặc trưng, độ nhiễu và seed.</td><td>Sinh dữ liệu có thể lặp lại với cùng loại dữ liệu và cấu hình.</td></tr>
+  <tr><th scope="row">F03 · Nhập CSV</th><td>Chọn tệp, cột mục tiêu và các cột đầu vào.</td><td>Kiểm tra dữ liệu, báo lỗi cột hoặc dòng không hợp lệ. Hỗ trợ xử lý giá trị thiếu.</td></tr>
+  <tr><th scope="row">F04 · Chia và chuẩn bị</th><td>Chọn tỷ lệ chia, tùy chọn chuẩn hóa.</td><td>Tách tập huấn luyện, kiểm định và kiểm tra. Tính tham số tiền xử lý từ tập huấn luyện.</td></tr>
+</tbody></table><p class="key">Ví dụ ngay trong hệ thống với 500 mẫu mặc định gồm 320 mẫu huấn luyện, 80 mẫu kiểm định và 100 mẫu kiểm tra.</p>
+<div class="speaker-note"><p>Seed là giá trị giúp tái tạo dữ liệu hoặc cách chia. Tập huấn luyện dùng để học hệ số, tập kiểm định dùng để chọn cấu hình và tập kiểm tra dùng để đánh giá cuối. Với CSV, cột mục tiêu phải khác các cột đầu vào.</p><p><a href="../../../Angular/Hoiquy3d/src/app/state/lab-store.ts" target="_blank" rel="noopener">Cấu hình phòng thí nghiệm</a> · <a href="../../../Angular/Hoiquy3d/src/app/core/engine/experiment-workflow.ts" target="_blank" rel="noopener">Luồng chia dữ liệu</a> · <a href="CSV-AND-HISTORY.md" target="_blank" rel="noopener">Nhập CSV và lịch sử</a></p></div>
+</section>
+
+<section id="s4" class="slide dense" aria-labelledby="s4-title" hidden>
+<header><p class="eyebrow">Yêu cầu chức năng · Huấn luyện và giải thích</p><h2 id="s4-title" tabindex="-1">Xem một vòng học diễn ra thế nào</h2></header>
+<ol class="flow ">
+  <li><b>A · Dữ liệu</b><span>Xác định các điểm đang dùng để học.</span></li>
+  <li><b>B–C · Dự đoán và sai số</b><span>Tính dự đoán theo hệ số hiện tại, rồi xem độ lệch.</span></li>
+  <li><b>D–E · Tính và xem trước</b><span>Tính gradient và xem hệ số dự kiến sau cập nhật.</span></li>
+  <li><b>F · Áp dụng</b><span>Ghi nhận hệ số mới và tăng bộ đếm vòng.</span></li>
+</ol><table>
+<thead><tr><th scope="col">Chức năng</th><th scope="col">Hành vi có thể kiểm tra</th></tr></thead>
+<tbody>
+  <tr><th scope="row">F05 · Điều khiển</th><td>Đặt tốc độ học và số vòng tối đa. Có thể chạy tự động, tạm dừng, chạy từng bước hoặc đặt lại.</td></tr>
+  <tr><th scope="row">F06 · Theo dõi</th><td>Worker trả kết quả để giao diện cập nhật mô hình, sai số và chỉ số.</td></tr>
+  <tr><th scope="row">F07 · Giải thích</th><td>Ở bước E, kết quả mới chỉ được xem trước. Qua bước F, bộ đếm tăng đúng một vòng.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Bước học A–F cho thấy từ điểm dữ liệu và hệ số hiện tại, hệ thống tính sai số và đề xuất cập nhật thế nào. Khi thuyết trình, nhấn mạnh E là xem trước, F là áp dụng.</p><p><a href="../../../Angular/Hoiquy3d/src/app/core/engine/regression.worker.ts" target="_blank" rel="noopener">Xử lý hồi quy</a> · <a href="CAI-TIEN-QUY-TRINH-HOC-2026-11-14.md" target="_blank" rel="noopener">Quy trình học A–F</a></p></div>
+</section>
+
+<section id="s5" class="slide dense" aria-labelledby="s5-title" hidden>
+<header><p class="eyebrow">Yêu cầu chức năng · Đánh giá và lưu</p><h2 id="s5-title" tabindex="-1">So cấu hình, đánh giá rồi lưu kết quả</h2></header>
+<table>
+<thead><tr><th scope="col">Chức năng</th><th scope="col">Hành vi có thể kiểm tra</th></tr></thead>
+<tbody>
+  <tr><th scope="row">F08 · Ghi nhận lần thử</th><td>Lưu thông số và kết quả của lượt thử vào nhật ký. Đặt một lần làm mốc để so với lần tiếp theo.</td></tr>
+  <tr><th scope="row">F09 · Đánh giá cuối</th><td>Dùng kết quả kiểm định để chọn cấu hình. Khi bấm đánh giá test, giao diện hiển thị kết quả trên tập kiểm tra như RMSE, MAE và R².</td></tr>
+  <tr><th scope="row">F10 · Lưu thí nghiệm</th><td>Thành viên lưu trạng thái và kết quả vào IndexedDB. Với dữ liệu có tập kiểm định, cần thực hiện đánh giá cuối trước khi lưu.</td></tr>
+  <tr><th scope="row">F11 · Dùng lại bản lưu</th><td>Mở khôi phục dữ liệu và cấu hình, so sánh tối đa 4 bản lưu hoặc xuất kết quả JSON/CSV.</td></tr>
+</tbody></table><p class="caption">Nhật ký lần thử phục vụ quá trình chọn cấu hình. Bản lưu thí nghiệm là dữ liệu có thể mở lại.</p>
+<div class="speaker-note"><p>So tham số trên cùng dữ liệu và cách chia để kết quả có ý nghĩa. IndexedDB là cơ sở dữ liệu của trình duyệt, theo thiết bị và website. Nhật ký lần thử giữ tối đa 30 mục trong phiên làm việc. Người dùng có thể xuất nhật ký ra JSON.</p><p><a href="../../../Angular/Hoiquy3d/src/app/state/lab-store.ts" target="_blank" rel="noopener">Điều kiện ghi nhận và đánh giá</a> · <a href="../../../Angular/Hoiquy3d/src/app/core/storage/experiment-db.ts" target="_blank" rel="noopener">Lưu bản thí nghiệm</a> · <a href="CSV-AND-HISTORY.md" target="_blank" rel="noopener">Định dạng lưu và xuất</a></p></div>
+</section>
+
+<section id="s6" class="slide dense" aria-labelledby="s6-title" hidden>
+<header><p class="eyebrow">Yêu cầu chức năng · Đồng bộ và quản lý</p><h2 id="s6-title" tabindex="-1">Từ bản lưu trên máy đến bản ghi máy chủ</h2></header>
+<ol class="flow ">
+  <li><b>Lưu tại máy</b><span>Angular ghi bản thí nghiệm vào IndexedDB và đánh dấu chờ đồng bộ.</span></li>
+  <li><b>Gửi bản lưu</b><span>Thành viên có phiên hợp lệ bấm đồng bộ. Angular gửi POST /experiments/bulk.</span></li>
+  <li><b>Kiểm tra và ghi</b><span>NestJS kiểm tra ID, quyền sở hữu, dữ liệu và phiên bản trước khi ghi MongoDB.</span></li>
+  <li><b>Xác nhận từng bản</b><span>Phản hồi cho biết bản nào đã ghi và phiên bản mới. Bản xung đột cần được xử lý tiếp.</span></li>
+</ol><table>
+<thead><tr><th scope="col">Chức năng</th><th scope="col">Xử lý bên máy chủ</th></tr></thead>
+<tbody>
+  <tr><th scope="row">F12 · Đồng bộ</th><td>Hỗ trợ gửi lại cùng mã lần sửa. Khi xung đột, giao diện cho lấy bản máy chủ hoặc giữ bản đang sửa thành bản sao.</td></tr>
+  <tr><th scope="row">F13 · Quản lý dữ liệu</th><td>Có API upload, xem, tải và xóa mềm bộ dữ liệu. API thí nghiệm có tạo, đọc, sửa và xóa mềm.</td></tr>
+  <tr><th scope="row">F14 · Lưu lần chạy</th><td>API lưu cấu hình và kết quả từng lần chạy, hỗ trợ đọc lại và lọc theo thí nghiệm.</td></tr>
+</tbody></table>
+<div class="speaker-note"><p>Các đường dẫn API bên dưới tiền tố /api/v1. Xóa bản lưu trên giao diện hiện là xóa cục bộ. Xóa mềm trên máy chủ thuộc API riêng. POST /sync/batch và GET /sync/changes là luồng đồng bộ tổng quát của backend. Nút đồng bộ bản lưu Angular hiện gửi POST /experiments/bulk.</p><p><a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Xử lý bulk và xung đột</a> · <a href="API-HANDBOOK.md" target="_blank" rel="noopener">Danh mục API</a></p></div>
+</section>
+
+<section id="s7" class="slide dense" aria-labelledby="s7-title" hidden>
+<header><p class="eyebrow">Mô hình thực thể</p><h2 id="s7-title" tabindex="-1">Ba thực thể chính nối với nhau bằng ID</h2></header>
+<div class="entity-chain">
+ <div><strong><code>datasets</code></strong><span>Bộ dữ liệu</span></div>
+ <span class="relation" aria-label="không hoặc một bộ dữ liệu cho mỗi thí nghiệm, không hoặc nhiều thí nghiệm cho mỗi bộ dữ liệu">0..1 → 0..N</span>
+ <div><strong><code>experiments</code></strong><span>Thí nghiệm</span></div>
+ <span class="relation" aria-label="một đến nhiều">1 → 0..N</span>
+ <div><strong><code>trainingRuns</code></strong><span>Lần chạy</span></div>
+</div><table>
+<thead><tr><th scope="col">Quan hệ</th><th scope="col">Cách biểu diễn trong MongoDB</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Dataset → Experiment</th><td><code>experiments.datasetId</code> tham chiếu <code>datasets._id</code>. Một thí nghiệm có tối đa một dataset và có thể tự mang cấu hình sinh mẫu hoặc snapshot CSV.</td></tr>
+  <tr><th scope="row">Experiment → TrainingRun</th><td><code>trainingRuns.experimentId</code> bắt buộc và tham chiếu <code>experiments._id</code>. Một thí nghiệm có thể có nhiều lần chạy.</td></tr>
+  <tr><th scope="row">User → Dữ liệu và phiên</th><td>Ba collection nghiệp vụ có <code>ownerId: String</code>. Phiên liên kết với tài khoản qua <code>session.userId</code>. Một tài khoản có thể có nhiều bản ghi và phiên.</td></tr>
+</tbody></table><p class="caption">0..N nghĩa là có thể chưa có bản ghi con hoặc có nhiều bản ghi con.</p>
+<div class="speaker-note"><p>MongoDB cấp _id. Hai liên kết nghiệp vụ này dùng ObjectId. ownerId là chuỗi định danh tài khoản. Service kiểm tra tài nguyên tham chiếu tồn tại và quyền truy cập trước khi gắn. POST /experiments thông thường cần dataset, còn luồng bulk có thể đồng bộ bản tự mang dữ liệu.</p><p><a href="../src/modules/experiments/schemas/experiment.schema.ts" target="_blank" rel="noopener">Schema Experiment</a> · <a href="../src/modules/training-runs/schemas/training-run.schema.ts" target="_blank" rel="noopener">Schema TrainingRun</a> · <a href="../src/modules/login/schemas/user.schema.ts" target="_blank" rel="noopener">Schema User</a></p></div>
+</section>
+
+<section id="s8" class="slide dense" aria-labelledby="s8-title" hidden>
+<header><p class="eyebrow">Schema MongoDB · Dataset</p><h2 id="s8-title" tabindex="-1">Dataset giữ thông tin để tìm và đọc CSV</h2></header>
+<table class="schema dataset-schema">
+<thead><tr><th scope="col">Trường</th><th scope="col">Kiểu và ràng buộc</th><th scope="col">Dùng để làm gì?</th></tr></thead>
+<tbody>
+  <tr><th scope="row"><code>clientId · ownerId</code></th><td>String bắt buộc. clientId có chỉ mục duy nhất.</td><td>Tra bản ghi theo ID phía client và xác định chủ sở hữu.</td></tr>
+  <tr><th scope="row"><code>name · sourceType · status</code></th><td>Tên tối đa 120 ký tự. Nguồn upload/sample/generated. Trạng thái mặc định ready.</td><td>Cho biết bộ dữ liệu đến từ đâu và đã sẵn sàng để dùng chưa.</td></tr>
+  <tr><th scope="row"><code>rowCount · columns[]</code></th><td>Số dòng và mảng tài liệu cột gồm tên, kiểu suy ra, số thiếu và thống kê số.</td><td>Kiểm tra nhanh dữ liệu mà không cần đọc toàn bộ tệp.</td></tr>
+  <tr><th scope="row"><code>previewRows[] · storage</code></th><td>Dòng xem trước. storage chứa provider, key, format, sha256 và filePath tùy chọn.</td><td>Hiển thị mẫu, định vị tệp và lưu dấu kiểm tra nội dung.</td></tr>
+  <tr><th scope="row"><code>createdAt · updatedAt · deletedAt</code></th><td>Dấu thời gian. deletedAt có giá trị khi xóa mềm.</td><td>Theo dõi thay đổi và loại bản đã xóa khỏi truy vấn.</td></tr>
+</tbody></table><p class="key">Upload CSV của backend lưu tệp gốc trên ổ đĩa máy chủ. MongoDB giữ mô tả bộ dữ liệu và đường dẫn tệp.</p>
+<div class="speaker-note"><p>columns và storage được nhúng vì thường đọc cùng dataset. Khi tệp đã ghi mà tạo metadata thất bại, service dọn tệp đã ghi. Thao tác nhập CSV trong phòng thí nghiệm là luồng đọc file tại trình duyệt, khác API upload tệp dữ liệu.</p><p><a href="../src/modules/datasets/schemas/dataset.schema.ts" target="_blank" rel="noopener">Schema Dataset</a> · <a href="../src/modules/datasets/datasets.service.ts" target="_blank" rel="noopener">Xử lý bộ dữ liệu</a></p></div>
+</section>
+
+<section id="s9" class="slide dense" aria-labelledby="s9-title" hidden>
+<header><p class="eyebrow">Schema MongoDB · Experiment</p><h2 id="s9-title" tabindex="-1">Experiment giữ cấu hình và kết quả để mở lại</h2></header>
+<table class="schema">
+<thead><tr><th scope="col">Nhóm trường</th><th scope="col">Thiết kế trong tài liệu</th></tr></thead>
+<tbody>
+  <tr><th scope="row"><code>clientId · name · ownerId</code></th><td>ID phía client duy nhất, tên bắt buộc tối đa 120 ký tự, có chủ sở hữu.</td></tr>
+  <tr><th scope="row"><code>algorithm · status</code></th><td>Nhúng <code>{ type, version, config }</code>. Trạng thái gồm draft, ready, running, completed, error.</td></tr>
+  <tr><th scope="row"><code>preprocessing · split</code></th><td>Nhúng cách xử lý ô thiếu, cờ chuẩn hóa, seed và tỷ lệ test. Schema đặt mặc định seed 42 và tỷ lệ test 0,2.</td></tr>
+  <tr><th scope="row"><code>datasetId · synthetic · csvData</code></th><td>Có thể tham chiếu dataset, lưu cấu hình sinh mẫu hoặc giữ bản chụp CSV đã xử lý để mở lại.</td></tr>
+  <tr><th scope="row"><code>w · b · iterations · train · test</code></th><td><code>w: Number[]</code>, <code>b: Number</code>, số vòng và các nhóm MSE, RMSE, MAE, R². <code>learningReport</code> có thể giữ kết quả kiểm định.</td></tr>
+  <tr><th scope="row"><code>syncVersion · lastMutationId · deletedAt</code></th><td>Phiên bản mặc định 1, mã lần sửa gần nhất và thời điểm xóa mềm.</td></tr>
+</tbody></table><p class="caption">Cấu hình và kết quả thường được đọc cùng nhau khi khôi phục nên được nhúng vào cùng bản ghi.</p>
+<div class="speaker-note"><p>Nhánh sinh mẫu lưu kind, version, sampleCount, featureCount, noise, seed, trainRatio. Nhánh CSV có thể lưu bản chụp dữ liệu phục vụ khôi phục. MongoDB schema dùng Mixed cho vài trường như csvData và cấu hình thuật toán, còn service có quy tắc kiểm tra đầu vào. Thí nghiệm mới tạo qua API thường yêu cầu dataset. Bulk chấp nhận bản lưu tự mang dữ liệu.</p><p><a href="../src/modules/experiments/schemas/experiment.schema.ts" target="_blank" rel="noopener">Schema Experiment</a> · <a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Quy tắc ghi và đồng bộ</a></p></div>
+</section>
+
+<section id="s10" class="slide dense" aria-labelledby="s10-title" hidden>
+<header><p class="eyebrow">Schema MongoDB · TrainingRun</p><h2 id="s10-title" tabindex="-1">Mỗi lần chạy có một bản ghi riêng</h2></header>
+<table>
+<thead><tr><th scope="col">Nhóm trường</th><th scope="col">Thiết kế trong tài liệu</th></tr></thead>
+<tbody>
+  <tr><th scope="row"><code>clientId · experimentId · ownerId</code></th><td>ID lần chạy duy nhất, ObjectId của thí nghiệm bắt buộc và ID chủ sở hữu.</td></tr>
+  <tr><th scope="row"><code>algorithmType · algorithmVersion</code></th><td>Giữ thuật toán và phiên bản dùng lúc chạy. Có thể đối chiếu khi thuật toán thay đổi.</td></tr>
+  <tr><th scope="row"><code>configSnapshot · seed · datasetSha256</code></th><td>Bản chụp cấu hình, seed và mã kiểm tra dữ liệu nếu được gửi lên.</td></tr>
+  <tr><th scope="row"><code>metrics · modelParameters · history[]</code></th><td>Chỉ số, hệ số và mảng điểm lịch sử <code>{ step, loss, parameters, recordedAt }</code>.</td></tr>
+  <tr><th scope="row"><code>status · startedAt · completedAt</code></th><td>Trạng thái lượt chạy và mốc thời gian, giúp biết bản ghi kết thúc thế nào.</td></tr>
+</tbody></table><p class="key">Tách lần chạy thành collection riêng để lọc và đọc theo thí nghiệm. Lịch sử của một lần chạy được nhúng trong chính bản ghi đó.</p>
+<div class="speaker-note"><p>API TrainingRun lưu và trả dữ liệu nhận được. Phần tính toán của giao diện vẫn chạy trong Web Worker. Nhật ký đang xem trong Angular chưa đồng nghĩa với một bản ghi trainingRuns trên server.</p><p><a href="../src/modules/training-runs/schemas/training-run.schema.ts" target="_blank" rel="noopener">Schema TrainingRun</a> · <a href="../src/modules/training-runs/training-runs.service.ts" target="_blank" rel="noopener">Xử lý lần chạy</a></p></div>
+</section>
+
+<section id="s11" class="slide dense" aria-labelledby="s11-title" hidden>
+<header><p class="eyebrow">Schema MongoDB · Phiên và nhật ký</p><h2 id="s11-title" tabindex="-1">Bốn collection hỗ trợ truy cập và theo dõi</h2></header>
+<table class="schema">
+<thead><tr><th scope="col">Collection</th><th scope="col">Nhóm trường chính</th><th scope="col">Vai trò</th></tr></thead>
+<tbody>
+  <tr><th scope="row"><code>users</code></th><td><code>email, passwordHash, displayName, role, status, sessionVersion</code></td><td>Tài khoản và trạng thái truy cập. Email duy nhất. Chỉ lưu mật khẩu đã băm.</td></tr>
+  <tr><th scope="row"><code>sessions</code></th><td><code>session.userId, session.sessionVersion, expires</code></td><td>Phiên do express-session và connect-mongo quản lý. Phiên được cấu hình 7 ngày.</td></tr>
+  <tr><th scope="row"><code>auditLogs</code></th><td><code>userId, action, targetId, ip, at</code></td><td>Lưu hành động tài khoản để truy vết. Có sự kiện chưa xác định được userId.</td></tr>
+  <tr><th scope="row"><code>syncOperations</code></th><td><code>ownerId, idempotencyKey, entityType, entityClientId, clientVersion, serverVersion, status</code></td><td>Nhận diện thao tác gửi lại ở /sync/batch. Khóa chống lặp có chỉ mục duy nhất.</td></tr>
+</tbody></table><p class="caption">Bảy collection gồm ba collection nghiệp vụ và bốn collection hỗ trợ.</p>
+<div class="speaker-note"><p>Đổi mật khẩu tăng sessionVersion để phiên cũ không còn hợp lệ. syncOperations gắn với tài nguyên qua cặp entityType và entityClientId. Bulk của Angular dùng lastMutationId trực tiếp trên experiment.</p><p><a href="../src/modules/login/schemas/user.schema.ts" target="_blank" rel="noopener">User</a> · <a href="../src/config/session.config.ts" target="_blank" rel="noopener">Cấu hình phiên</a> · <a href="../src/modules/login/schemas/audit.schema.ts" target="_blank" rel="noopener">AuditLog</a> · <a href="../src/modules/sync/schemas/sync-operation.schema.ts" target="_blank" rel="noopener">SyncOperation</a></p></div>
+</section>
+
+<section id="s12" class="slide dense" aria-labelledby="s12-title" hidden>
+<header><p class="eyebrow">Schema MongoDB · Tra cứu và toàn vẹn</p><h2 id="s12-title" tabindex="-1">Chỉ mục và phiên bản giải quyết bài toán gì?</h2></header>
+<table>
+<thead><tr><th scope="col">Thiết kế</th><th scope="col">Tác dụng trong hệ thống</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Duy nhất</th><td><code>clientId</code> duy nhất trong từng collection nghiệp vụ. <code>users.email</code> và <code>syncOperations.idempotencyKey</code> cũng có chỉ mục duy nhất.</td></tr>
+  <tr><th scope="row">Chỉ mục ghép</th><td>Có <code>{ ownerId: 1, updatedAt: -1 }</code> trên datasets và experiments. trainingRuns có <code>{ experimentId: 1, createdAt: -1 }</code> và <code>{ ownerId: 1, createdAt: -1 }</code>.</td></tr>
+  <tr><th scope="row">Kiểm tra tham chiếu</th><td>Service tra dataset hoặc thí nghiệm cha và kiểm tra quyền. <code>deletedAt</code> giúp phân biệt bản còn dùng và bản đã xóa.</td></tr>
+  <tr><th scope="row">Ghi có điều kiện</th><td>Bulk so <code>expectedVersion</code> với <code>syncVersion</code>. Ghi thành công tăng phiên bản. Phiên bản cũ gây xung đột. Gửi lại cùng <code>lastMutationId</code> có thể nhận xác nhận bản đã ghi.</td></tr>
+</tbody></table><p class="caption">Ví dụ hai máy cùng sửa phiên bản 3. Máy ghi trước lên phiên bản 4. Máy gửi phiên bản 3 sau đó nhận báo xung đột.</p>
+<div class="speaker-note"><p>Index ghép sắp xếp theo trường người sở hữu hoặc thí nghiệm trước rồi mới theo thời gian. Với truy vấn cụ thể cần kiểm tra kế hoạch thực thi để biết MongoDB chọn chỉ mục nào. Code kiểm tra và ghi từng bản trong bulk, nên có thể có thành công một phần.</p><p><a href="../src/modules/experiments/schemas/experiment.schema.ts" target="_blank" rel="noopener">Chỉ mục Experiment</a> · <a href="../src/modules/datasets/schemas/dataset.schema.ts" target="_blank" rel="noopener">Chỉ mục Dataset</a> · <a href="../src/modules/training-runs/schemas/training-run.schema.ts" target="_blank" rel="noopener">Chỉ mục TrainingRun</a> · <a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Ghi có điều kiện</a></p></div>
+</section>
+
+<section id="s13" class="slide dense" aria-labelledby="s13-title" hidden>
+<header><p class="eyebrow">Yêu cầu phi chức năng · An toàn và dữ liệu</p><h2 id="s13-title" tabindex="-1">Bảo vệ bản lưu và xử lý gián đoạn</h2></header>
+<table>
+<thead><tr><th scope="col">Yêu cầu</th><th scope="col">Cơ chế hiện tại</th><th scope="col">Cách đánh giá</th></tr></thead>
+<tbody>
+  <tr><th scope="row">N01 · Bảo mật phiên</th><td>Mật khẩu băm. Cookie HttpOnly, SameSite Lax và Secure ở môi trường production.</td><td>Phiên hết hạn hoặc không hợp lệ bị chặn ở API yêu cầu xác thực.</td></tr>
+  <tr><th scope="row">N02 · Phạm vi truy cập</th><td>Guard kiểm tra phiên. Service tra theo quyền sở hữu. Yêu cầu ghi có kiểm tra origin và header.</td><td>Tài khoản thông thường chỉ đọc và ghi dữ liệu được phép.</td></tr>
+  <tr><th scope="row">N03 · Toàn vẹn</th><td>Dữ liệu được kiểm tra trước ghi. Phiên bản chặn ghi đè. Có mã nhận diện lần sửa.</td><td>Thử hai client sửa cùng bản. Thao tác gửi lại giữ đúng số bản ghi.</td></tr>
+  <tr><th scope="row">N04 · Khôi phục khi mất mạng</th><td>Bản đã lưu vẫn ở IndexedDB. Có thể đồng bộ lại khi mạng và phiên hoạt động.</td><td>Kiểm tra bản chờ còn sau khi mở lại trình duyệt và đồng bộ được sau khi kết nối.</td></tr>
+  <tr><th scope="row">N05 · Truy vết</th><td>Lưu sự kiện tài khoản và kết quả đồng bộ tổng quát.</td><td>Tra theo tài khoản, thời điểm hoặc định danh thao tác.</td></tr>
+</tbody></table><p class="caption">Khả năng mở ứng dụng khi ngoại tuyến còn phụ thuộc trang và tài nguyên đã được tải.</p>
+<div class="speaker-note"><p>Với người đã đăng nhập trên máy này, frontend có thể dùng thông tin nhận diện đã lưu để truy cập cục bộ khi xác nhận phiên thất bại theo luồng offline. Ghi lên máy chủ vẫn cần phiên hợp lệ. Cột cuối mô tả cách có thể kiểm tra từng yêu cầu.</p><p><a href="../src/config/configure-app.ts" target="_blank" rel="noopener">Cấu hình HTTP</a> · <a href="../src/config/session.config.ts" target="_blank" rel="noopener">Cookie và session</a> · <a href="../../../Angular/Hoiquy3d/src/app/state/auth-session.ts" target="_blank" rel="noopener">Nhận diện cục bộ</a> · <a href="../src/modules/experiments/experiments.service.ts" target="_blank" rel="noopener">Kiểm tra phiên bản</a></p></div>
+</section>
+
+<section id="s14" class="slide dense" aria-labelledby="s14-title" hidden>
+<header><p class="eyebrow">Yêu cầu phi chức năng · Trải nghiệm và vận hành</p><h2 id="s14-title" tabindex="-1">Giao diện dễ theo dõi, kết quả có thể đối chiếu</h2></header>
+<table>
+<thead><tr><th scope="col">Yêu cầu</th><th scope="col">Cách thực hiện trong bài</th></tr></thead>
+<tbody>
+  <tr><th scope="row">N06 · Độ phản hồi</th><td>Tính hồi quy trong Web Worker để giao diện tiếp tục nhận thao tác và cập nhật kết quả trong lúc tính.</td></tr>
+  <tr><th scope="row">N07 · Khả năng tiếp cận</th><td>Có chế độ giảm chuyển động. Kết quả có biểu đồ sai số 2D và bảng chỉ số để đọc cùng phần 3D.</td></tr>
+  <tr><th scope="row">N08 · Tính tái lập</th><td>Lưu cấu hình dữ liệu, seed và tham số lần chạy. Khi chia CSV, tham số tiền xử lý lấy từ tập học.</td></tr>
+  <tr><th scope="row">N09 · Dễ bảo trì</th><td>NestJS chia module theo tài nguyên. Controller nhận yêu cầu, service xử lý quy tắc, schema định nghĩa dữ liệu.</td></tr>
+  <tr><th scope="row">N10 · Vận hành và quan sát</th><td>Có endpoint health và giới hạn kích thước yêu cầu. Khi đo tải, theo dõi độ trễ, lỗi, CPU/RAM và MongoDB.</td></tr>
+</tbody></table><p class="caption">Bản đặc tả đưa ra mốc phản hồi giao diện 200 ms cho thao tác thông thường trên máy demo. Đây là mục tiêu dự kiến.</p>
+<div class="speaker-note"><p>Cần chọn thao tác và cấu hình máy trước khi đo phản hồi giao diện. Ví dụ đo từ lúc bấm tạm dừng đến khi nút và trạng thái cập nhật. Năng lực phục hồi từ sự cố máy chủ cần quy trình backup và khôi phục MongoDB lẫn thư mục CSV vì dữ liệu nằm ở hai nơi.</p><p><a href="../SPEC-hoi-quy-3d.md" target="_blank" rel="noopener">Các yêu cầu phi chức năng</a> · <a href="../../../Angular/Hoiquy3d/src/app/core/engine/regression.worker.ts" target="_blank" rel="noopener">Web Worker</a> · <a href="../../../Angular/Hoiquy3d/docs/CONG-NGHE-VA-HIEU-UNG.md" target="_blank" rel="noopener">Đồ họa và chuyển động</a></p></div>
+</section>
+
+<section id="s15" class="slide dense" aria-labelledby="s15-title" hidden>
+<header><p class="eyebrow">Yêu cầu phi chức năng · Giới hạn hiện tại</p><h2 id="s15-title" tabindex="-1">Hệ thống đang giới hạn những gì?</h2></header>
+<table>
+<thead><tr><th scope="col">Vị trí</th><th scope="col">Giới hạn trong mã nguồn</th><th scope="col">Ý nghĩa</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Dữ liệu tự sinh trên web</th><td>10–10.000 mẫu, 1–5 đặc trưng.</td><td>Giới hạn đầu vào của phép tính trong trình duyệt.</td></tr>
+  <tr><th scope="row">CSV và bản lưu trên web</th><td>Nhập tệp tối đa 20 MiB, cần ít nhất 10 dòng hợp lệ. Mỗi bản lưu IndexedDB tối đa 8 MiB.</td><td>Giới hạn tệp đầu vào và bản lưu được kiểm tra ở hai bước riêng.</td></tr>
+  <tr><th scope="row">Upload CSV lên NestJS</th><td>Mặc định 10 MiB/tệp, tối đa 50.000 dòng dữ liệu.</td><td>Kiểm tra dung lượng và số dòng khi lưu CSV trên máy chủ.</td></tr>
+  <tr><th scope="row">Ghi và đọc qua API</th><td>JSON tối đa 10 MiB. Bulk tối đa 100 mục. Trang danh sách tối đa 100 bản ghi.</td><td>Bulk đồng thời chịu giới hạn dung lượng và số mục. Cả hai đều phải đạt.</td></tr>
+  <tr><th scope="row">Đăng nhập và đăng ký</th><td>Mỗi endpoint giới hạn 5 yêu cầu/phút theo địa chỉ IP.</td><td>Giảm yêu cầu dồn dập vào hai API tài khoản.</td></tr>
+</tbody></table><p class="key">Số người dùng đồng thời hệ thống chịu được hiện chưa có kết quả đo. Các con số trên là ngưỡng đầu vào và tần suất.</p>
+<div class="speaker-note"><p>Một người có thể tạo nhiều yêu cầu và mỗi yêu cầu có chi phí khác nhau. Cần đo riêng đọc danh sách, đồng bộ batch và upload CSV. Chạy mô hình trên trình duyệt chủ yếu dùng tài nguyên máy khách. Tệp/upload được giới hạn riêng giữa FE và BE vì hai luồng khác nhau.</p><p><a href="../../../Angular/Hoiquy3d/src/app/state/lab-store.ts" target="_blank" rel="noopener">Ngưỡng dữ liệu tổng hợp</a> · <a href="../../../Angular/Hoiquy3d/src/app/features/csv-import/csv-import.ts" target="_blank" rel="noopener">Giới hạn nhập CSV trên web</a> · <a href="../src/config/configure-app.ts" target="_blank" rel="noopener">Kích thước JSON</a> · <a href="../src/modules/datasets/README.md" target="_blank" rel="noopener">Cấu hình upload</a> · <a href="../src/modules/login/login.module.ts" target="_blank" rel="noopener">Giới hạn đăng nhập và đăng ký</a></p></div>
+</section>
+
+<section id="s16" class="slide dense" aria-labelledby="s16-title" hidden>
+<header><p class="eyebrow">Yêu cầu phi chức năng · Kịch bản đo tải</p><h2 id="s16-title" tabindex="-1">Đo bao nhiêu người dùng đồng thời?</h2></header>
+<table>
+<thead><tr><th scope="col">Hạng mục</th><th scope="col">Đề xuất nghiệm thu</th></tr></thead>
+<tbody>
+  <tr><th scope="row">Môi trường</th><td>Ghi rõ phiên bản mã, CPU/RAM, nơi đặt NestJS và MongoDB, kích cỡ dữ liệu và dung lượng từng bản lưu.</td></tr>
+  <tr><th scope="row">Mức tải</th><td>Chạy lần lượt 10, 25 và 50 người dùng ảo có phiên riêng. Giữ mỗi mức 5 phút sau khi tăng tải.</td></tr>
+  <tr><th scope="row">Kịch bản chủ đạo</th><td>80% đọc danh sách hoặc chi tiết. 20% đồng bộ. Mỗi lô gồm 10 bản dữ liệu sinh mẫu. Đo upload CSV riêng.</td></tr>
+  <tr><th scope="row">Mục tiêu ở mức 25 người</th><td>P95 đọc ≤ 500 ms. P95 đồng bộ ≤ 2 giây. Lỗi máy chủ và timeout &lt; 1%. Kiểm tra bản ghi trùng và xung đột.</td></tr>
+  <tr><th scope="row">Kết quả cần báo cáo</th><td>Mức cao nhất đạt các tiêu chí, số yêu cầu/giây thực đo, P95 từng nhóm API, lỗi, CPU/RAM và lỗi MongoDB.</td></tr>
+</tbody></table><p class="key">25 người đồng thời là mục tiêu nghiệm thu đề xuất. Sức tải thực tế cần đo trên môi trường triển khai.</p>
+<div class="speaker-note"><p>P95 là mốc mà khoảng 95% yêu cầu hoàn thành trong hoặc dưới khoảng thời gian đó. Mỗi người dùng ảo nghỉ 1–3 giây giữa lượt thao tác để mô phỏng sử dụng. Tạo phiên trước khi tăng tải để tách giới hạn đăng nhập khỏi tải đọc và ghi. Đếm 409 chủ động trong kiểm tra xung đột riêng với các lỗi 5xx hoặc timeout. Kiểm tra số lượng và phiên bản bản ghi sau mỗi mức tải.</p><p><a href="../SPEC-hoi-quy-3d.md" target="_blank" rel="noopener">Đặc tả chất lượng</a> · <a href="API-HANDBOOK.md" target="_blank" rel="noopener">API dùng cho kịch bản đo</a></p></div>
+</section>
+<aside id="notes" aria-labelledby="noteTitle" hidden>
+  <header><h3 id="noteTitle">Gợi ý lời nói</h3><button type="button" id="closeNotes">Đóng ghi chú</button></header>
+  <div id="noteBody"></div>
+</aside>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = $('stage'), notes = $('notes');
+  let current = 0;
+  const fromHash = () => {
+    const match = location.hash.match(/^#s?(\d+)$/);
+    const index = slides.findIndex(slide => '#' + slide.id === location.hash);
+    if (index >= 0) return index;
+    return match ? Number(match[1]) - 1 : 0;
+  };
+  function show(number) {
+    current = Math.max(0, Math.min(slides.length - 1, number));
+    slides.forEach((slide, i) => slide.hidden = i !== current);
+    $('noteBody').replaceChildren(...[...slides[current].querySelector('.speaker-note').children].map(node => node.cloneNode(true)));
+    notes.scrollTop = 0;
+    if (location.hash !== '#' + slides[current].id) history.replaceState(null, '', '#' + slides[current].id);
+  }
+  function fit() {
+    stage.style.transform = 'translate(-50%,-50%) scale(' + Math.min(innerWidth / 1280, innerHeight / 720) + ')';
+  }
+  function toggleNotes(open) {
+    notes.hidden = !open;
+    if (open) $('closeNotes').focus();
+    else slides[current].querySelector('h1,h2').focus({ preventScroll: true });
+  }
+  async function fullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch { /* Browser fullscreen is also available through F11. */ }
+  }
+  $('closeNotes').onclick = () => toggleNotes(false);
+  addEventListener('resize', fit);
+  addEventListener('hashchange', () => show(fromHash()));
+  addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches('select,input,textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'n' || (k === 'escape' && !notes.hidden)) { e.preventDefault(); toggleNotes(notes.hidden); }
+    else if (k === 'f') { e.preventDefault(); void fullscreen(); }
+    else if (['arrowright','pagedown','arrowleft','pageup','home','end'].includes(k) ||
+             ([' ','enter'].includes(k) && !e.target.closest('button,a'))) {
+      e.preventDefault();
+      if (k === 'home') show(0);
+      else if (k === 'end') show(slides.length - 1);
+      else show(current + (['arrowleft','pageup'].includes(k) ? -1 : 1));
+    }
+  });
+  fit();
+  show(fromHash());
+})();
+</script>
+</body>
+</html>
