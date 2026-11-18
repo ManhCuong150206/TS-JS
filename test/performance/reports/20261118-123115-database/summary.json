@@ -1,0 +1,375 @@
+﻿{
+    "metrics":  {
+                    "vus_max":  {
+                                    "value":  1,
+                                    "min":  1,
+                                    "max":  1
+                                },
+                    "api_latency_datasets_list":  {
+                                                      "avg":  9.429667741935486,
+                                                      "med":  8.77015,
+                                                      "p(90)":  13.24836,
+                                                      "p(95)":  15.206624999999999,
+                                                      "p(99)":  21.793124000000006,
+                                                      "max":  29.9864
+                                                  },
+                    "test_datasets_deleted":  {
+                                                  "count":  62,
+                                                  "rate":  3.9912326009698322
+                                              },
+                    "http_req_failed":  {
+                                            "passes":  0,
+                                            "fails":  312,
+                                            "thresholds":  {
+                                                               "rate\u003c0.01":  false
+                                                           },
+                                            "value":  0
+                                        },
+                    "data_received":  {
+                                          "count":  160057,
+                                          "rate":  10303.624458281103
+                                      },
+                    "api_latency_users_me":  {
+                                                 "p(99)":  16.342946,
+                                                 "max":  17.0636,
+                                                 "avg":  7.577956451612902,
+                                                 "med":  7.0519,
+                                                 "p(90)":  11.781089999999999,
+                                                 "p(95)":  13.009269999999995
+                                             },
+                    "http_req_blocked":  {
+                                             "avg":  0.08057467948717949,
+                                             "med":  0,
+                                             "p(90)":  0,
+                                             "p(95)":  0,
+                                             "p(99)":  0.525535,
+                                             "max":  23.0303
+                                         },
+                    "data_sent":  {
+                                      "count":  103079,
+                                      "rate":  6635.681697989828
+                                  },
+                    "api_errors_dataset_detail":  {
+                                                      "passes":  0,
+                                                      "fails":  62,
+                                                      "value":  0
+                                                  },
+                    "api_errors_datasets_delete":  {
+                                                       "passes":  0,
+                                                       "fails":  62,
+                                                       "value":  0
+                                                   },
+                    "api_errors_auth_logout":  {
+                                                   "passes":  0,
+                                                   "fails":  1,
+                                                   "value":  0
+                                               },
+                    "http_reqs":  {
+                                      "count":  312,
+                                      "rate":  20.084912443590124
+                                  },
+                    "http_req_tls_handshaking":  {
+                                                     "max":  0,
+                                                     "avg":  0,
+                                                     "med":  0,
+                                                     "p(90)":  0,
+                                                     "p(95)":  0,
+                                                     "p(99)":  0
+                                                 },
+                    "api_response_time":  {
+                                              "p(99)":  20.112601999999995,
+                                              "max":  314.4948,
+                                              "avg":  9.493861217948714,
+                                              "med":  7.67105,
+                                              "p(90)":  13.68565,
+                                              "p(95)":  15.615504999999994
+                                          },
+                    "http_req_sending":  {
+                                             "med":  0,
+                                             "p(90)":  0,
+                                             "p(95)":  0,
+                                             "p(99)":  0.6186509999999995,
+                                             "max":  0.8331,
+                                             "avg":  0.020797115384615386
+                                         },
+                    "api_error_rate":  {
+                                           "passes":  0,
+                                           "fails":  312,
+                                           "thresholds":  {
+                                                              "rate\u003c0.01":  false
+                                                          },
+                                           "value":  0
+                                       },
+                    "test_datasets_created":  {
+                                                  "count":  62,
+                                                  "rate":  3.9912326009698322
+                                              },
+                    "http_req_duration{expected_response:true}":  {
+                                                                      "med":  7.67105,
+                                                                      "p(90)":  13.68565,
+                                                                      "p(95)":  15.615504999999994,
+                                                                      "p(99)":  20.112601999999995,
+                                                                      "max":  314.4948,
+                                                                      "avg":  9.493861217948714
+                                                                  },
+                    "api_latency_auth_login":  {
+                                                   "p(90)":  314.4948,
+                                                   "p(95)":  314.4948,
+                                                   "p(99)":  314.4948,
+                                                   "max":  314.4948,
+                                                   "avg":  314.4948,
+                                                   "med":  314.4948
+                                               },
+                    "api_errors_datasets_create":  {
+                                                       "passes":  0,
+                                                       "fails":  62,
+                                                       "value":  0
+                                                   },
+                    "api_latency_datasets_create":  {
+                                                        "p(90)":  14.54988,
+                                                        "p(95)":  18.096064999999996,
+                                                        "p(99)":  19.391183,
+                                                        "max":  19.6838,
+                                                        "avg":  8.747179032258066,
+                                                        "med":  7.77545
+                                                    },
+                    "http_req_duration":  {
+                                              "avg":  9.493861217948714,
+                                              "med":  7.67105,
+                                              "p(90)":  13.68565,
+                                              "p(95)":  15.615504999999994,
+                                              "p(99)":  20.112601999999995,
+                                              "max":  314.4948,
+                                              "thresholds":  {
+                                                                 "p(95)\u003c500":  false,
+                                                                 "p(99)\u003c1000":  false
+                                                             }
+                                          },
+                    "api_status_2xx":  {
+                                           "count":  312,
+                                           "rate":  20.084912443590124
+                                       },
+                    "http_req_connecting":  {
+                                                "med":  0,
+                                                "p(90)":  0,
+                                                "p(95)":  0,
+                                                "p(99)":  0,
+                                                "max":  1.0779,
+                                                "avg":  0.006830448717948718
+                                            },
+                    "http_req_receiving":  {
+                                               "p(99)":  3.8767269999999985,
+                                               "max":  4.6907,
+                                               "avg":  1.3118628205128193,
+                                               "med":  1.2641,
+                                               "p(90)":  2.1318799999999998,
+                                               "p(95)":  3.1037099999999995
+                                           },
+                    "iteration_duration":  {
+                                               "max":  291.2884,
+                                               "avg":  244.78189677419357,
+                                               "med":  242.47305,
+                                               "p(90)":  262.71255,
+                                               "p(95)":  268.50050999999996,
+                                               "p(99)":  281.65162000000004
+                                           },
+                    "api_latency_dataset_detail":  {
+                                                       "med":  7.20915,
+                                                       "p(90)":  12.169609999999999,
+                                                       "p(95)":  13.841835,
+                                                       "p(99)":  18.327019000000004,
+                                                       "max":  19.3165,
+                                                       "avg":  7.864990322580646
+                                                   },
+                    "http_req_waiting":  {
+                                             "med":  6.4338999999999995,
+                                             "p(90)":  11.738660000000003,
+                                             "p(95)":  14.057054999999998,
+                                             "p(99)":  17.949277999999996,
+                                             "max":  310.7109,
+                                             "avg":  8.161201282051284
+                                         },
+                    "vus":  {
+                                "value":  1,
+                                "min":  1,
+                                "max":  1
+                            },
+                    "api_latency_auth_logout":  {
+                                                    "avg":  15.3973,
+                                                    "med":  15.3973,
+                                                    "p(90)":  15.3973,
+                                                    "p(95)":  15.3973,
+                                                    "p(99)":  15.3973,
+                                                    "max":  15.3973
+                                                },
+                    "iterations":  {
+                                       "rate":  3.9912326009698322,
+                                       "count":  62
+                                   },
+                    "api_errors_users_me":  {
+                                                "passes":  0,
+                                                "fails":  62,
+                                                "value":  0
+                                            },
+                    "api_errors_datasets_list":  {
+                                                     "fails":  62,
+                                                     "passes":  0,
+                                                     "value":  0
+                                                 },
+                    "api_latency_datasets_delete":  {
+                                                        "p(95)":  15.272134999999999,
+                                                        "p(99)":  20.405879000000002,
+                                                        "max":  20.7817,
+                                                        "avg":  8.834925806451611,
+                                                        "med":  8.01625,
+                                                        "p(90)":  13.02103
+                                                    },
+                    "api_errors_auth_login":  {
+                                                  "passes":  0,
+                                                  "fails":  1,
+                                                  "value":  0
+                                              },
+                    "api_http_status":  {
+                                            "count":  312,
+                                            "rate":  20.084912443590124
+                                        },
+                    "checks":  {
+                                   "passes":  624,
+                                   "fails":  0,
+                                   "thresholds":  {
+                                                      "rate\u003e0.99":  false
+                                                  },
+                                   "value":  1
+                               }
+                },
+    "setup_data":  {
+                       "cookie":  "[REDACTED]"
+                   },
+    "root_group":  {
+                       "path":  "",
+                       "id":  "d41d8cd98f00b204e9800998ecf8427e",
+                       "groups":  {
+                                      "setup":  {
+                                                    "checks":  {
+                                                                   "auth_login: HTTP success":  {
+                                                                                                    "fails":  0,
+                                                                                                    "name":  "auth_login: HTTP success",
+                                                                                                    "path":  "::setup::auth_login: HTTP success",
+                                                                                                    "id":  "fbfac9654bc158b10b3c79fe364875bf",
+                                                                                                    "passes":  1
+                                                                                                },
+                                                                   "auth_login: expected response":  {
+                                                                                                         "id":  "13fd92e39f3ebbe7f5970c6da4c11f84",
+                                                                                                         "passes":  1,
+                                                                                                         "fails":  0,
+                                                                                                         "name":  "auth_login: expected response",
+                                                                                                         "path":  "::setup::auth_login: expected response"
+                                                                                                     }
+                                                               },
+                                                    "name":  "setup",
+                                                    "path":  "::setup",
+                                                    "id":  "5c0f8025f7e0b6654089e5b00e950f1a",
+                                                    "groups":  {
+
+                                                               }
+                                                },
+                                      "teardown":  {
+                                                       "groups":  {
+
+                                                                  },
+                                                       "checks":  {
+                                                                      "auth_logout: HTTP success":  {
+                                                                                                        "passes":  1,
+                                                                                                        "fails":  0,
+                                                                                                        "name":  "auth_logout: HTTP success",
+                                                                                                        "path":  "::teardown::auth_logout: HTTP success",
+                                                                                                        "id":  "d985ba369773aaa1d6e85c7ff504b31d"
+                                                                                                    },
+                                                                      "auth_logout: expected response":  {
+                                                                                                             "path":  "::teardown::auth_logout: expected response",
+                                                                                                             "id":  "880b5b249cbe1cdb97d7b11cbc2abf23",
+                                                                                                             "passes":  1,
+                                                                                                             "fails":  0,
+                                                                                                             "name":  "auth_logout: expected response"
+                                                                                                         }
+                                                                  },
+                                                       "name":  "teardown",
+                                                       "path":  "::teardown",
+                                                       "id":  "a8a9942382e8ffe2e56ef29e664b8229"
+                                                   }
+                                  },
+                       "checks":  {
+                                      "users_me: HTTP success":  {
+                                                                     "fails":  0,
+                                                                     "name":  "users_me: HTTP success",
+                                                                     "path":  "::users_me: HTTP success",
+                                                                     "id":  "ae7c13ae8f719070193bb43104c540a5",
+                                                                     "passes":  62
+                                                                 },
+                                      "users_me: expected response":  {
+                                                                          "name":  "users_me: expected response",
+                                                                          "path":  "::users_me: expected response",
+                                                                          "id":  "b0a4cbde3f8896ded98c206811a35a47",
+                                                                          "passes":  62,
+                                                                          "fails":  0
+                                                                      },
+                                      "datasets_list: HTTP success":  {
+                                                                          "path":  "::datasets_list: HTTP success",
+                                                                          "id":  "8a9fa08a0dd7519f6dbbab66629ee7f2",
+                                                                          "passes":  62,
+                                                                          "fails":  0,
+                                                                          "name":  "datasets_list: HTTP success"
+                                                                      },
+                                      "datasets_list: expected response":  {
+                                                                               "name":  "datasets_list: expected response",
+                                                                               "path":  "::datasets_list: expected response",
+                                                                               "id":  "47be45fa90831be3a211b0938b16b69b",
+                                                                               "passes":  62,
+                                                                               "fails":  0
+                                                                           },
+                                      "datasets_create: HTTP success":  {
+                                                                            "name":  "datasets_create: HTTP success",
+                                                                            "path":  "::datasets_create: HTTP success",
+                                                                            "id":  "49972a774c69b2ee4c43e2e893aa28e3",
+                                                                            "passes":  62,
+                                                                            "fails":  0
+                                                                        },
+                                      "datasets_create: expected response":  {
+                                                                                 "name":  "datasets_create: expected response",
+                                                                                 "path":  "::datasets_create: expected response",
+                                                                                 "id":  "70416f114b881148fc602e2547fb9e18",
+                                                                                 "passes":  62,
+                                                                                 "fails":  0
+                                                                             },
+                                      "dataset_detail: HTTP success":  {
+                                                                           "name":  "dataset_detail: HTTP success",
+                                                                           "path":  "::dataset_detail: HTTP success",
+                                                                           "id":  "03ce4073a5e2cf8400c4dbb45290d45e",
+                                                                           "passes":  62,
+                                                                           "fails":  0
+                                                                       },
+                                      "dataset_detail: expected response":  {
+                                                                                "passes":  62,
+                                                                                "fails":  0,
+                                                                                "name":  "dataset_detail: expected response",
+                                                                                "path":  "::dataset_detail: expected response",
+                                                                                "id":  "8f4e26d6dac1f185ccc08d8636b5f618"
+                                                                            },
+                                      "datasets_delete: HTTP success":  {
+                                                                            "id":  "0ec3fd1ebdd656db5c5df59f76b82883",
+                                                                            "passes":  62,
+                                                                            "fails":  0,
+                                                                            "name":  "datasets_delete: HTTP success",
+                                                                            "path":  "::datasets_delete: HTTP success"
+                                                                        },
+                                      "datasets_delete: expected response":  {
+                                                                                 "name":  "datasets_delete: expected response",
+                                                                                 "path":  "::datasets_delete: expected response",
+                                                                                 "id":  "e4eebdfb2f61151b1030a958cf3ae9d9",
+                                                                                 "passes":  62,
+                                                                                 "fails":  0
+                                                                             }
+                                  },
+                       "name":  ""
+                   }
+}

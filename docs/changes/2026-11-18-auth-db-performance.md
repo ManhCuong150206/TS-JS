@@ -28,8 +28,29 @@
 
 ## Trạng thái sau khi sửa
 
-- Chưa triển khai; sẽ cập nhật sau khi hoàn tất và xác minh.
+- Báo cáo trạng thái trước khi sửa đã được commit riêng bằng `9a4db42` trước khi chỉnh code.
+- Thêm `test/performance/scenarios/database.js` và `scripts/run-database.ps1`; mở rộng `scripts/run.ps1` với profile database, fixture kiểm soát và report parser.
+- Workflow giới hạn 1–3 VU, 5–60 giây, yêu cầu `-ConfirmTestDataWrites`, Base URL localhost và Mongo connection localhost. Tài khoản được tạo ngẫu nhiên, không ghi password/session; chỉ cleanup tài khoản/fixtures do lượt test tạo qua API.
+- Runner lấy Windows CPU/RAM/working set hàng giây trong lúc chạy và MongoDB `serverStatus` trước/sau, lưu `resource-samples.json` và `mongo-snapshots.json`. Các metrics không quy đổi thành query latency; counters là cumulative toàn MongoDB server.
+- Cập nhật README, API inventory, tổng hợp performance và báo cáo thay đổi ban đầu. Không sửa `src/`, API, schema, logic backend hoặc database config.
+- k6 DB API monitored smoke cuối (1 VU, 5 giây): 117 requests, 23 dataset create/soft-delete, avg 5.91 ms, p95 6.26 ms, p99 7.52 ms, lỗi 0%, checks 100%, cleanup PASS. Artifact `test/performance/reports/20261118-020946-database/`.
+- k6 DB API concurrency monitored (3 VU, 15 giây): 1,007 requests, 201 dataset create/soft-delete, avg 5.04 ms, p95 7.98 ms, p99 10.10 ms, lỗi 0%, checks 100%, cleanup PASS. Artifact `test/performance/reports/20261118-020453-database/`.
+- Trong concurrency: 8 samples CPU trung bình 11.82%, max 20.20%, RAM khả dụng thấp nhất 1,878 MB; Mongo connections current/active 15/3 trước/sau, rejected 0, resident 59→60 MB. OPCounters delta được ghi trong artifact/tổng hợp, không coi là số truy vấn API chính xác.
+- K6 summary từng chứa cookie trong setup data; artifact đầu đã redacted thủ công, runner nay tự redacts trường cookie trước khi ghi summary. Quét artifacts không tìm thấy cookie/password.
 
 ## Kiểm tra đã chạy
 
-- Chưa chạy.
+- Fixture probe: register/login, datasets list/create/detail/delete và account cleanup đều thành công; credentials ngẫu nhiên, không ghi ra log.
+- `run-database.ps1` thực chạy các profile 1 VU/5s và 3 VU/15s; tất cả k6 thresholds/checks PASS, cleanup PASS. Lượt cuối sau khi thêm Mongo localhost guard cũng PASS.
+- `k6 inspect` profile database: PASS; xác nhận default 1 VU/15s.
+- Windows PowerShell parser: 10/10 scripts PASS.
+- `npm.cmd run lint`: exit 0; còn warning pre-existing tại `src/modules/experiments/experiments.service.ts:343`.
+- `npx.cmd tsc --noEmit`: PASS.
+- Prettier check các file unit/performance/docs liên quan: PASS; `git diff --check`: PASS.
+- Secret scan các reports: không có session cookie/password/env credential.
+- Unit Jest/Vitest và build không chạy lại ở phần gia hạn này; kết quả gần nhất trước đó đã có trong báo cáo `unit-k6-testing` và không có thay đổi `src/`.
+
+## Cách hoàn tác sau sửa
+
+- Chỉ hoàn tác code/harness này bằng cách xóa `test/performance/scenarios/database.js`, `test/performance/scripts/run-database.ps1` và khôi phục `test/performance/scripts/run.ps1`, README/API inventory/report files; không chạm `src/` hoặc database.
+- Chạy workflow đã xác nhận cleanup thành công ở mọi lượt; audit events là backend side-effect có thể còn lại. Không drop database/collection.

@@ -1,0 +1,98 @@
+﻿[
+    {
+        "timestamp":  "2026-11-18T12:31:22.5979883+07:00",
+        "cpuTotalPercent":  23.577353443198945,
+        "availableMemoryMB":  844,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  241.16,
+        "mongoWorkingSetMB":  56.43,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:24.6905327+07:00",
+        "cpuTotalPercent":  28.08246219762648,
+        "availableMemoryMB":  831,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  242.2,
+        "mongoWorkingSetMB":  56.59,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:26.7417518+07:00",
+        "cpuTotalPercent":  23.35060947581422,
+        "availableMemoryMB":  907,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  242.37,
+        "mongoWorkingSetMB":  56.68,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:28.7981396+07:00",
+        "cpuTotalPercent":  31.952108165728653,
+        "availableMemoryMB":  972,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  242.73,
+        "mongoWorkingSetMB":  56.77,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:30.8519892+07:00",
+        "cpuTotalPercent":  21.192200572567653,
+        "availableMemoryMB":  977,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  241.48,
+        "mongoWorkingSetMB":  56.88,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:32.8983379+07:00",
+        "cpuTotalPercent":  20.319816900487709,
+        "availableMemoryMB":  971,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  240.4,
+        "mongoWorkingSetMB":  56.96,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:34.9517237+07:00",
+        "cpuTotalPercent":  28.339986106748803,
+        "availableMemoryMB":  987,
+        "nodeProcessCount":  10,
+        "nodeWorkingSetMB":  239.74,
+        "mongoWorkingSetMB":  56.98,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    },
+    {
+        "timestamp":  "2026-11-18T12:31:36.9840900+07:00",
+        "cpuTotalPercent":  30.944144991767462,
+        "availableMemoryMB":  948,
+        "nodeProcessCount":  11,
+        "nodeWorkingSetMB":  307.97,
+        "mongoWorkingSetMB":  57.01,
+        "PSComputerName":  "localhost",
+        "RunspaceId":  "e0d43c0d-3e94-4186-9754-5f5fdec1dbd3",
+        "PSShowComputerName":  false,
+        "PSSourceJobInstanceId":  "fd3151af-7145-41a6-ba9c-d2252bded87a"
+    }
+]

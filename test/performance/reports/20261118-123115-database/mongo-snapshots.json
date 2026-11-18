@@ -1,0 +1,68 @@
+﻿{
+    "before":  {
+                   "version":  "9.0.4",
+                   "connections":  {
+                                       "current":  12,
+                                       "available":  204829,
+                                       "totalCreated":  278,
+                                       "rejected":  0,
+                                       "active":  3,
+                                       "queuedForEstablishment":  0,
+                                       "establishmentRateLimit":  {
+                                                                      "rejected":  0,
+                                                                      "exempted":  0,
+                                                                      "interruptedDueToClientDisconnect":  0
+                                                                  },
+                                       "threaded":  12,
+                                       "exhaustIsMaster":  0,
+                                       "exhaustHello":  2,
+                                       "awaitingTopologyChanges":  2,
+                                       "loadBalanced":  0,
+                                       "priority":  0
+                                   },
+                   "opcounters":  {
+                                      "insert":  516,
+                                      "query":  6439,
+                                      "update":  3101,
+                                      "delete":  34,
+                                      "getmore":  0,
+                                      "command":  20318,
+                                      "aggregate":  571
+                                  },
+                   "residentMB":  55,
+                   "uptimeSeconds":  228125
+               },
+    "after":  {
+                  "version":  "9.0.4",
+                  "connections":  {
+                                      "current":  12,
+                                      "available":  204829,
+                                      "totalCreated":  280,
+                                      "rejected":  0,
+                                      "active":  3,
+                                      "queuedForEstablishment":  0,
+                                      "establishmentRateLimit":  {
+                                                                     "rejected":  0,
+                                                                     "exempted":  0,
+                                                                     "interruptedDueToClientDisconnect":  0
+                                                                 },
+                                      "threaded":  12,
+                                      "exhaustIsMaster":  0,
+                                      "exhaustHello":  2,
+                                      "awaitingTopologyChanges":  2,
+                                      "loadBalanced":  0,
+                                      "priority":  0
+                                  },
+                  "opcounters":  {
+                                     "insert":  580,
+                                     "query":  7248,
+                                     "update":  3475,
+                                     "delete":  36,
+                                     "getmore":  0,
+                                     "command":  20330,
+                                     "aggregate":  633
+                                 },
+                  "residentMB":  57,
+                  "uptimeSeconds":  228145
+              }
+}
